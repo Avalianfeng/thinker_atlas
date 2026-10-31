@@ -4,10 +4,10 @@ import { lifespan, personUrl } from '../lib/atlas';
 import { resolvePortrait, personSlug } from '../lib/portrait';
 interface Props {
   person: any;
-  index: number;
+  index?: number;
   mini?: boolean;
 }
-const { person, index, mini = false } = Astro.props;
+const { person, index = 0, mini = false } = Astro.props;
 const t = person.data;
 const years = lifespan(person);
 const slug = personSlug(person.id);
@@ -17,12 +17,26 @@ const accents = ['#6E7F94', '#8B7355', '#5F7A6A', '#7A6A82', '#8A6E5C'];
 const accent = accents[seed % accents.length];
 const en = t.name_en || '';
 ---
-<a class:list={['placard', { mini }]} href={personUrl(person.id)} style={`--accent:${accent};--o-join:${index};--o-year:${t.born || 0}`}>
-  <Portrait class="portrait" name={t.name} original={en || t.name} years={years} accent={accent} src={portraitSrc} />
+<a
+  class:list={['placard', { mini }]}
+  href={personUrl(person.id)}
+  style={`--accent:${accent}`}
+  data-born={t.born || ''}
+  data-order={index}
+>
+  <Portrait
+    class="portrait"
+    name={t.name}
+    original={en || t.name}
+    years={years}
+    accent={accent}
+    src={portraitSrc}
+    showYears={false}
+  />
   <div class="body">
     <div class="zh">{t.name}</div>
     {!mini && en && <div class="orig">{en}</div>}
-    <div class="years num">{years}</div>
-    {!mini && <p class="intro">{t.intro}</p>}
+    {!mini && <div class="years num">{years}</div>}
+    {!mini && t.intro && <p class="intro">{t.intro}</p>}
   </div>
 </a>

@@ -1,0 +1,226 @@
+/* 基础排版与中文排版细节：见方案 §6.3、§6.5 */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-serif);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  font-weight: 400;
+  -webkit-text-size-adjust: 100%;
+  text-rendering: optimizeLegibility;
+  /* 标点挤压与行首行尾禁则 */
+  text-spacing-trim: normal;
+  line-break: strict;
+  word-break: normal;
+  overflow-wrap: break-word;
+  hanging-punctuation: allow-end;
+  font-kerning: normal;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+}
+
+::selection {
+  background: color-mix(in srgb, var(--p-own) 22%, transparent);
+}
+
+h1,
+h2,
+h3,
+h4,
+.ui,
+nav,
+button,
+input,
+label,
+figcaption,
+small,
+.meta {
+  font-family: var(--font-sans);
+}
+
+h1,
+h2,
+h3,
+h4 {
+  font-weight: 500;
+  line-height: 1.4;
+  margin: calc(var(--u) * 6) 0 calc(var(--u) * 2);
+  letter-spacing: 0.01em;
+}
+h1 {
+  font-size: var(--fs-h1);
+  margin-top: 0;
+}
+h2 {
+  font-size: var(--fs-h2);
+}
+h3 {
+  font-size: var(--fs-h3);
+  font-weight: 500;
+}
+h4 {
+  font-size: var(--fs-h4);
+  font-weight: 500;
+}
+
+p,
+ul,
+ol,
+blockquote,
+figure,
+table,
+dl {
+  margin: 0 0 var(--line);
+}
+
+/* 中文长文：段间距 = 1 行高，不用首行缩进 */
+p {
+  text-indent: 0;
+}
+
+a {
+  color: inherit;
+  text-decoration-line: underline;
+  text-decoration-color: var(--rule);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.22em;
+  transition: text-decoration-color var(--dur) ease;
+}
+a:hover,
+a:focus-visible {
+  text-decoration-color: currentColor;
+}
+:focus-visible {
+  outline: 2px solid var(--p-own);
+  outline-offset: 2px;
+}
+
+hr {
+  border: 0;
+  border-top: 1px solid var(--rule);
+  margin: calc(var(--line) * 1.5) 0;
+}
+
+strong,
+b {
+  font-weight: 500;
+}
+
+em {
+  font-style: normal;
+  text-emphasis: filled dot;
+  text-emphasis-position: under right;
+}
+:lang(de) em,
+:lang(en) em,
+.latin em {
+  font-style: italic;
+  text-emphasis: none;
+}
+
+/* 西文、原文、书名 */
+.latin,
+:lang(de),
+:lang(en),
+:lang(fr),
+:lang(la) {
+  font-family: var(--font-latin);
+}
+cite.orig,
+.title-orig {
+  font-family: var(--font-latin);
+  font-style: italic;
+}
+
+/* 年代与编号：等宽数字 */
+.num,
+time,
+.year,
+.prop {
+  font-variant-numeric: tabular-nums lining-nums;
+}
+
+small,
+.small,
+.meta {
+  font-size: var(--fs-small);
+  line-height: var(--lh-ui);
+  color: var(--ink-2);
+}
+
+ul,
+ol {
+  padding-left: 1.4em;
+}
+li + li {
+  margin-top: calc(var(--u) / 2);
+}
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: var(--fs-small);
+  font-family: var(--font-sans);
+}
+th,
+td {
+  border-bottom: 1px solid var(--rule);
+  padding: var(--u) calc(var(--u) * 1.5) var(--u) 0;
+  text-align: left;
+  vertical-align: top;
+}
+th {
+  font-weight: 500;
+  color: var(--ink-2);
+}
+
+code {
+  font-size: 0.88em;
+  font-family: ui-monospace, 'SFMono-Regular', Menlo, monospace;
+}
+
+blockquote {
+  margin-left: 0;
+  padding-left: calc(var(--u) * 2.5);
+  border-left: 1px solid var(--rule);
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+details > summary {
+  cursor: pointer;
+  list-style: none;
+}
+details > summary::-webkit-details-marker {
+  display: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .fade-in {
+    animation: fade var(--dur) ease-out both;
+  }
+  @keyframes fade {
+    from {
+      opacity: 0;
+    }
+  }
+  details[open] > :not(summary) {
+    animation: fade var(--dur) ease-out;
+  }
+}

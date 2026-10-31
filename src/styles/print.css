@@ -1,0 +1,69 @@
+/* 打印：单栏、旁注转为段后注、隐藏导航与开关 */
+@media print {
+  :root,
+  [data-theme='dark'] {
+    --paper: #fff;
+    --paper-2: #f3f3f3;
+    --ink: #000;
+    --ink-2: #444;
+    --rule: #bbb;
+  }
+  html {
+    font-size: 11pt;
+  }
+  .site-header,
+  .site-footer,
+  .toc-side,
+  .toc-bar,
+  .toggles,
+  .sorter,
+  .rooms,
+  .no-print {
+    display: none !important;
+  }
+  .page {
+    max-width: none;
+    padding: 0;
+  }
+  .essay {
+    display: block;
+  }
+  .sidenote {
+    display: block !important;
+    float: none;
+    width: auto;
+    margin: 4pt 0 8pt 1.5em;
+    padding: 0;
+    border: 0;
+    font-size: 9pt;
+  }
+  .sn-ref::after {
+    border: 0 !important;
+  }
+  details > :not(summary) {
+    display: block !important;
+  }
+  .quote .orig summary {
+    display: none;
+  }
+  .ptag[data-source]::after {
+    content: ' · ' attr(data-source);
+    position: static;
+    border: 0;
+    padding: 0;
+    background: none;
+  }
+  a {
+    text-decoration: none;
+  }
+  h1,
+  h2,
+  h3 {
+    break-after: avoid;
+  }
+  .block,
+  .quote,
+  .note {
+    break-inside: avoid;
+  }
+}

@@ -1,0 +1,39 @@
+---
+import Mdx from '@components/Mdx.astro';
+import Hall from '@layouts/Hall.astro';
+import TimelineV from '@components/TimelineV.astro';
+import { getAtlas, lifespan } from '@lib/atlas';
+import { render } from 'astro:content';
+
+export async function getStaticPaths() {
+  const atlas = await getAtlas();
+  return atlas.thinkers
+    .filter((t) => atlas.life.has(t.id))
+    .map((t) => ({ params: { thinker: t.id.replace('atlas:', '') }, props: { thinkerId: t.id } }));
+}
+
+const atlas = await getAtlas();
+const thinker = atlas.thinker(Astro.props.thinkerId);
+const life = atlas.life.get(thinker.id)!;
+
+const base = `/thinkers/${Astro.props.thinkerId.replace('atlas:', '')}`;
+---
+<Hall atlas={atlas} thinker={thinker} title="生平">
+  <h1>生平</h1>
+  <p class="meta num">{thinker.data.name.zh} · {lifespan(thinker)} · {life.data.events.length} 个事件</p>
+
+  <div class="essay">
+    <div class="prose">
+      <Mdx entry={life} />
+    </div>
+  </div>
+
+  <h2 class="section-title">完整时间线</h2>
+  <div class="essay">
+    <div class="prose">
+      <TimelineV events={life.data.events} accent={thinker.data.accent} />
+      <p class="meta">事件分类：生活、写作、出版、相遇、历史背景（背景事件以浅色标出）。同一条数据会出现在总时间线的泳道里。</p>
+    </div>
+  </div>
+  <p><a href={`${base}/`}>← 回到展厅</a></p>
+</Hall>

@@ -1,0 +1,52 @@
+---
+import Mdx from '@components/Mdx.astro';
+import Hall from '@layouts/Hall.astro';
+import Maturity from '@components/Maturity.astro';
+import { getAtlas, normalizeRef } from '@lib/atlas';
+import { render } from 'astro:content';
+
+export async function getStaticPaths() {
+  const atlas = await getAtlas();
+  return atlas.journal.map((j) => ({ params: { slug: j.id }, props: { slug: j.id } }));
+}
+
+const atlas = await getAtlas();
+const entry = atlas.journal.find((j) => j.id === Astro.props.slug)!;
+
+const refs = (Array.isArray(entry.data.atlas) ? entry.data.atlas : entry.data.atlas ? [entry.data.atlas] : []).map(normalizeRef);
+const tags = Array.isArray(entry.data.tags) ? entry.data.tags : entry.data.tags ? [entry.data.tags] : [];
+const thinkerId = refs.find((r) => atlas.thinkers.some((t) => t.id === r));
+const thinker = thinkerId ? atlas.thinker(thinkerId) : atlas.thinkers[0];
+---
+<Hall atlas={atlas} thinker={thinker} title="随笔">
+  <div class="essay">
+    <div class="prose">
+      <div class="kicker">
+        <a href="/journal/">随笔</a>
+        <span class="meta num">{entry.data.date ?? ''}</span>
+      </div>
+      <h1>{entry.data.title || entry.id}</h1>
+      <p class="meta">同步自 SilverBullet 的 <code>atlas/{entry.id}.md</code>；原稿在笔记中心编辑。</p>
+      <Mdx entry={entry} />
+      {refs.length > 0 && (
+        <p class="meta">
+          挂靠：{refs.map((r, i) => <>{i > 0 && '、'}{atlas.entities.has(r) ? <a href={atlas.ref(r).url}>{atlas.ref(r).title}</a> : <code>{r}</code>}</>)}
+        </p>
+      )}
+      {tags.length > 0 && <p class="meta">标签：{tags.join(' · ')}</p>}
+    </div>
+  </div>
+</Hall>
+
+<style>
+  .kicker {
+    font-family: var(--font-sans);
+    font-size: var(--fs-small);
+    display: flex;
+    gap: calc(var(--u) * 1.5);
+    color: var(--ink-2);
+  }
+  .kicker a {
+    text-decoration: none;
+  }
+</style>

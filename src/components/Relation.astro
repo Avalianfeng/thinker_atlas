@@ -1,0 +1,35 @@
+---
+import type { Atlas } from '../lib/atlas';
+interface Props {
+  relation: any;
+  atlas: Atlas;
+  compact?: boolean;
+}
+const { relation, atlas, compact = false } = Astro.props;
+const { from, to, type, directed, since, until, summary, source, verified, provenance } = relation.data;
+const fromRef = atlas.ref(from);
+const toRef = atlas.ref(to);
+const span = since ? (until ? `${since}—${until}` : `${since} 起`) : '';
+---
+<details class="relation">
+  <summary>
+    <a class="who" href={fromRef.url}>{fromRef.title}</a>
+    <span class="arrow" aria-label={directed ? '指向' : '与'}>{directed ? '→' : '↔'}</span>
+    <span class="rtype">{type}</span>
+    <a class="who" href={toRef.url}>{toRef.title}</a>
+    {span && <span class="when num">{span}</span>}
+    {!verified && <span class="unverified">待核实</span>}
+  </summary>
+  <div class="line">{summary}</div>
+  {!compact && (
+    <div class="more">
+      <p>
+        {fromRef.title}（<code>{fromRef.id}</code>）{directed ? ' → ' : ' ↔ '}{toRef.title}（<code>{toRef.id}</code>）；关系类型：{type}。
+        {source ? `出处：${source}。` : '出处待补。'}
+      </p>
+      <p class="meta">
+        来源类型：{provenance} · 条目 <code>{relation.id}</code>
+      </p>
+    </div>
+  )}
+</details>

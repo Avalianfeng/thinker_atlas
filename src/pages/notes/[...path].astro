@@ -1,0 +1,50 @@
+---
+import Base from '@layouts/Base.astro';
+import Mdx from '@components/Mdx.astro';
+import { getAtlas } from '@lib/atlas';
+
+export async function getStaticPaths() {
+  const atlas = await getAtlas();
+  return atlas.sbnotes.map((n) => ({
+    params: { path: n.data.page.replace(/\.md$/, '').replace(/^notes\//, '') },
+    props: { page: n.data.page },
+  }));
+}
+
+const atlas = await getAtlas();
+const page = Astro.props.page as string;
+const note = atlas.sbnotes.find((n) => n.data.page === page)!;
+const refs = note.data.atlas;
+---
+<Base title={note.data.title}>
+  <div class="page page-narrow">
+    <nav class="crumbs" aria-label="位置">
+      <span><a href="/notes/">笔记</a></span>
+      <span>{note.data.title}</span>
+    </nav>
+    <h1>{note.data.title}</h1>
+    <div class="meta">
+      <p>
+        只读副本 · 原笔记在 SilverBullet 的 <code>{note.data.page}</code>，请到那里修改。
+        {note.data.url && <a href={note.data.url}>在笔记中心打开 →</a>}
+      </p>
+      <p>
+        挂靠：{refs.map((r) => <>{atlas.entities.has(r) ? <a href={atlas.ref(r).url}>{atlas.ref(r).title}</a> : <code>{r}</code>}{' '}</>)}
+      </p>
+    </div>
+    <div class="essay">
+      <div class="prose">
+        <Mdx entry={note} />
+      </div>
+    </div>
+  </div>
+</Base>
+
+<style>
+  .meta a {
+    margin-left: var(--u);
+  }
+  .essay {
+    margin-top: calc(var(--u) * 3);
+  }
+</style>

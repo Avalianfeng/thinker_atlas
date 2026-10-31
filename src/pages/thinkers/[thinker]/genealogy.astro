@@ -1,0 +1,50 @@
+---
+import Hall from '@layouts/Hall.astro';
+import GraphMap from '@components/GraphMap.astro';
+import Relation from '@components/Relation.astro';
+import { getAtlas } from '@lib/atlas';
+
+export async function getStaticPaths() {
+  const atlas = await getAtlas();
+  return atlas.thinkers.map((t) => ({ params: { thinker: t.id.replace('atlas:', '') }, props: { thinkerId: t.id } }));
+}
+
+const atlas = await getAtlas();
+const thinker = atlas.thinker(Astro.props.thinkerId);
+const relations = atlas.relationsOf(thinker.id);
+const neighbors = new Set<string>([thinker.id]);
+for (const r of relations) {
+  neighbors.add(`atlas:${r.data.from.split('/')[0].replace('atlas:', '')}`);
+  neighbors.add(`atlas:${r.data.to.split('/')[0].replace('atlas:', '')}`);
+}
+const subset = atlas.thinkers.filter((t) => neighbors.has(t.id));
+---
+<Hall atlas={atlas} thinker={thinker} title="谱系">
+  <h1>谱系</h1>
+  <p class="lede">{thinker.data.name.zh} 与本馆已加入的其他人物之间的 {relations.length} 条关系。图中其余人物为淡色，便于看清位置。</p>
+
+  {subset.length > 1 ? (
+    <div class="graph-wrap">
+      <GraphMap thinkers={subset} relations={atlas.relations.filter((r) => relations.includes(r))} atlas={atlas} highlight={thinker.id} />
+    </div>
+  ) : (
+    <p class="meta">还没有与其他人物建立关系。加入第二位人物后，这里会自动出现。</p>
+  )}
+
+  <h2 class="section-title">关系条目</h2>
+  {relations.length > 0 ? relations.map((r) => <Relation relation={r} atlas={atlas} />) : <p class="meta">暂无。</p>}
+  <p style="margin-top:calc(var(--u)*4)"><a href="/genealogy/">→ 全局谱系</a> · <a href={`/thinkers/${Astro.props.thinkerId.replace('atlas:', '')}/`}>回到展厅</a></p>
+</Hall>
+
+<style>
+  .lede {
+    font-size: 20px;
+    max-width: 680px;
+    margin-bottom: calc(var(--u) * 3);
+  }
+  .graph-wrap {
+    border: 1px solid var(--rule);
+    padding: calc(var(--u) * 2);
+    overflow-x: auto;
+  }
+</style>

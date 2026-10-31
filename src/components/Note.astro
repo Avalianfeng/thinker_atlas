@@ -1,0 +1,11 @@
+---
+interface Props {
+  id?: string;
+  title?: string;
+}
+const { id, title } = Astro.props;
+---
+<aside class="note" id={id} aria-label="我的批注">
+  <div class="note-head">我的批注{title && <>：{title}</>}</div>
+  <slot />
+</aside>

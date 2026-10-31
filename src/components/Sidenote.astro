@@ -1,0 +1,4 @@
+---
+const id = `sn-${Math.random().toString(36).slice(2, 9)}`;
+---
+<label for={id} class="sn-ref" aria-label="旁注"></label><input type="checkbox" id={id} class="sn-toggle" /><span class="sidenote"><slot /></span>

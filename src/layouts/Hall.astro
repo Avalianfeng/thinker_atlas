@@ -1,0 +1,32 @@
+---
+import Base from '../layouts/Base.astro';
+import type { Atlas } from '../lib/atlas';
+
+interface Props {
+  atlas: Atlas;
+  thinker: any;
+  section?: string;
+  title: string;
+}
+const { atlas, thinker, section, title } = Astro.props;
+const t = thinker.data;
+const rooms = [
+  { key: 'life', label: '生平', href: '/life/', desc: '分期叙述与完整时间线' },
+  { key: 'thought', label: '思想', href: '/thought/', desc: '概念卡与长文' },
+  { key: 'works', label: '作品', href: '/works/', desc: '结构、论题与阅读笔记' },
+  { key: 'afterlife', label: '身后', href: '/afterlife/', desc: '继承、学派化与回响' },
+  { key: 'genealogy', label: '谱系', href: '/genealogy/', desc: '与同时代人的关系' },
+  { key: 'path', label: '学习路径', href: '/path/', desc: '有序阅读与检查点' },
+];
+const base = `/thinkers/${thinker.id.replace('atlas:', '')}`;
+---
+<Base title={`${title} · ${t.name.zh}`} accent={t.accent} description={t.intro}>
+  <div class="page">
+    <nav class="crumbs" aria-label="位置">
+      <span><a href="/">展厅</a></span>
+      <span><a href={base + '/'}>{t.name.zh}</a></span>
+      {title !== t.name.zh && <span>{title}</span>}
+    </nav>
+    <slot />
+  </div>
+</Base>

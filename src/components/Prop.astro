@@ -1,0 +1,11 @@
+---
+import { workUrl } from '../lib/atlas';
+interface Props {
+  n: string;
+  work?: string;
+}
+const { n, work = 'atlas:wittgenstein/tractatus' } = Astro.props;
+const anchor = `p-${n.replace(/^§/, 's')}`;
+const short = work.endsWith('/tractatus') ? 'TLP' : work.endsWith('/philosophical-investigations') ? 'PU' : '';
+---
+<a class="prop" href={`${workUrl(work)}#${anchor}`}>{short && `${short} `}{n}</a>

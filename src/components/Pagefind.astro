@@ -1,0 +1,49 @@
+---
+// Pagefind 索引只在 npm run build 后生成；开发服务器下不加载。
+---
+<div id="search-ui" class="search-ui no-print">
+  <input id="search-input" type="search" placeholder="搜索概念、人物、作品……" autocomplete="off" aria-label="站内搜索" />
+  <div id="search-results" class="search-results" aria-live="polite"></div>
+</div>
+
+<script>
+  const input = document.getElementById('search-input') as HTMLInputElement | null;
+  const results = document.getElementById('search-results') as HTMLElement | null;
+  let pagefind: any = null;
+
+  async function load() {
+    if (!input) return;
+    try {
+      pagefind = await import(/* @vite-ignore */ '/pagefind/pagefind.js');
+      await pagefind.options({ excerptLength: 40 });
+      await pagefind.init();
+    } catch {
+      input.placeholder = '搜索索引仅在构建后可用（npm run build）';
+      input.disabled = true;
+    }
+  }
+
+  let timer: number | undefined;
+  input?.addEventListener('input', () => {
+    clearTimeout(timer);
+    timer = window.setTimeout(async () => {
+      if (!pagefind || !results) return;
+      const q = input.value.trim();
+      if (!q) {
+        results.innerHTML = '';
+        return;
+      }
+      const search = await pagefind.search(q);
+      const items = await Promise.all(search.results.slice(0, 12).map((r: any) => r.data()));
+      results.innerHTML = items
+        .map(
+          (d: any) =>
+            `<a class="result" href="${d.url}"><span class="rt">${d.meta.title || d.url}</span><span class="re">${d.excerpt}</span></a>`,
+        )
+        .join('');
+      if (!items.length) results.innerHTML = '<p class="meta">没有找到。换个词试试。</p>';
+    }, 180);
+  });
+
+  load();
+</script>

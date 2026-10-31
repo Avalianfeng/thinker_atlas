@@ -1,0 +1,65 @@
+---
+import Mdx from '@components/Mdx.astro';
+import Hall from '@layouts/Hall.astro';
+import Placard from '@components/Placard.astro';
+import { getAtlas } from '@lib/atlas';
+import { render } from 'astro:content';
+
+export async function getStaticPaths() {
+  const atlas = await getAtlas();
+  return atlas.thinkers
+    .filter((t) => atlas.afterlife.has(t.id))
+    .map((t) => ({ params: { thinker: t.id.replace('atlas:', '') }, props: { thinkerId: t.id } }));
+}
+
+const atlas = await getAtlas();
+const thinker = atlas.thinker(Astro.props.thinkerId);
+const page = atlas.afterlife.get(thinker.id)!;
+
+const mentions = page.data.mentions.map((id) => atlas.thinkers.find((t) => t.id === id)).filter(Boolean);
+---
+<Hall atlas={atlas} thinker={thinker} title="身后">
+  <h1>身后</h1>
+  <p class="meta">直接继承 → 学派化 → 当代回响</p>
+
+  <div class="essay">
+    <div class="prose">
+      <Mdx entry={page} />
+    </div>
+    {mentions.length > 0 && (
+      <aside class="side">
+        <h3>本馆中与这段历史相关的人物</h3>
+        <div class="mini-wall">
+          {mentions.map((m, i) => <Placard thinker={m} index={i} mini />)}
+        </div>
+      </aside>
+    )}
+  </div>
+  <p><a href={`/thinkers/${Astro.props.thinkerId.replace('atlas:', '')}/`}>← 回到展厅</a></p>
+</Hall>
+
+<style>
+  .side {
+    grid-column: 3;
+  }
+  .side h3 {
+    font-size: var(--fs-tiny);
+    letter-spacing: 0.12em;
+    color: var(--ink-2);
+    font-weight: 500;
+    border-bottom: 1px solid var(--rule);
+    padding-bottom: 4px;
+    margin: 0 0 var(--u);
+  }
+  .mini-wall {
+    display: flex;
+    flex-direction: column;
+    gap: var(--u);
+  }
+  @media (max-width: 1199px) {
+    .side {
+      grid-column: 1;
+      margin-top: calc(var(--u) * 4);
+    }
+  }
+</style>

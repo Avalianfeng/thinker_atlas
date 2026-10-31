@@ -1,0 +1,147 @@
+---
+import Mdx from '@components/Mdx.astro';
+import Hall from '@layouts/Hall.astro';
+import { getAtlas, workUrl, conceptUrl, parseId } from '@lib/atlas';
+import { render } from 'astro:content';
+
+export async function getStaticPaths() {
+  const atlas = await getAtlas();
+  return atlas.works.map((w) => {
+    const { thinker, item } = parseId(w.id);
+    return { params: { thinker, work: item }, props: { workId: w.id } };
+  });
+}
+
+const atlas = await getAtlas();
+const work = atlas.works.find((w) => w.id === Astro.props.workId)!;
+const d = work.data;
+const thinker = atlas.thinker(`atlas:${parseId(d.id).thinker}`);
+
+const base = `/thinkers/${parseId(d.id).thinker}`;
+const mentions = atlas.life.get(thinker.id)?.data.events.filter((e) => e.work === d.id) ?? [];
+---
+<Hall atlas={atlas} thinker={thinker} title={d.title}>
+  <div class="essay">
+    <div class="prose">
+      <header class="work-head">
+        <div class="kicker"><a href={`${base}/works/`}>作品</a><span class="num">{d.year}</span></div>
+        <h1>{d.title}</h1>
+        <div class="orig latin">{d.original}</div>
+      </header>
+
+      <dl class="biblio">
+        <div><dt>原名</dt><dd class="latin" lang={d.lang}>{d.original}</dd></div>
+        {d.alt_titles.length > 0 && <div><dt>其他译名</dt><dd>{d.alt_titles.join('、')}</dd></div>}
+        <div><dt>写作</dt><dd class="num">{d.written || '待补'}</dd></div>
+        <div><dt>初版</dt><dd class="num">{d.year}</dd></div>
+        <div><dt>版本</dt><dd><ul>{d.editions.map((e) => <li>{e}</li>)}</ul></dd></div>
+        <div><dt>我读的译本</dt><dd>{d.reading || '待补'}</dd></div>
+      </dl>
+
+      {d.structure.length > 0 && (
+        <>
+          <h2>结构</h2>
+          <ol class="toc-list">
+            {d.structure.map((s) => (
+              <li><span class="n num">{s.n}</span>{s.title}{s.original && <span class="o latin" lang={d.lang}>{s.original}</span>}</li>
+            ))}
+          </ol>
+        </>
+      )}
+
+      {d.theses.length > 0 && (
+        <>
+          <h2>核心论题</h2>
+          <ul>{d.theses.map((t) => <li>{t}</li>)}</ul>
+        </>
+      )}
+
+      <Mdx entry={work} />
+
+      {d.concepts.length > 0 && (
+        <>
+          <h2>关联概念</h2>
+          <ul>{d.concepts.map((c) => <li><a href={conceptUrl(c)}>{atlas.ref(c).title}</a></li>)}</ul>
+        </>
+      )}
+
+      {mentions.length > 0 && (
+        <>
+          <h2>生平中的节点</h2>
+          <ul class="num">{mentions.map((m) => <li>{m.date} · {m.title}</li>)}</ul>
+        </>
+      )}
+    </div>
+  </div>
+</Hall>
+
+<style>
+  .work-head {
+    border-bottom: 1px solid var(--rule);
+    padding-bottom: calc(var(--u) * 2);
+    margin-bottom: calc(var(--u) * 3);
+  }
+  .work-head h1 {
+    margin: var(--u) 0;
+  }
+  .work-head .orig {
+    color: var(--ink-2);
+    font-size: 18px;
+  }
+  .kicker {
+    font-family: var(--font-sans);
+    font-size: var(--fs-small);
+    color: var(--ink-2);
+    display: flex;
+    gap: calc(var(--u) * 1.5);
+  }
+  .kicker a {
+    text-decoration: none;
+  }
+  .biblio {
+    font-size: 16px;
+    border-top: 1px solid var(--rule);
+    border-bottom: 1px solid var(--rule);
+    padding: calc(var(--u) * 1.5) 0 0;
+    display: grid;
+    gap: 0;
+  }
+  .biblio > div {
+    display: grid;
+    grid-template-columns: 8em 1fr;
+    gap: calc(var(--u) * 2);
+    padding: calc(var(--u) * 0.75) 0;
+  }
+  .biblio dt {
+    font-family: var(--font-sans);
+    font-size: var(--fs-small);
+    color: var(--ink-2);
+  }
+  .biblio dd {
+    margin: 0;
+  }
+  .biblio ul {
+    margin: 0;
+    padding-left: 1.1em;
+  }
+  .toc-list {
+    font-size: 16px;
+    padding-left: 0;
+    list-style: none;
+  }
+  .toc-list li {
+    border-bottom: 1px solid var(--rule);
+    padding: calc(var(--u) * 0.75) 0;
+  }
+  .toc-list .n {
+    display: inline-block;
+    min-width: 7em;
+    color: var(--p-transcribed-text);
+    font-family: var(--font-latin);
+  }
+  .toc-list .o {
+    color: var(--ink-2);
+    margin-left: 0.6em;
+    font-size: 15px;
+  }
+</style>

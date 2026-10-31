@@ -177,7 +177,7 @@ const journal = defineCollection({
   }),
 });
 
-/** npm run sync 拉取的 SilverBullet 笔记缓存（只读副本，原笔记只在 SilverBullet 里改）。 */
+/** 遗留笔记缓存（content/sb-cache/）。独立 Atlas 默认不拉取；可删示例后留空。 */
 const sbnotes = defineCollection({
   loader: glob({ pattern: '**/*.md', base: './content/sb-cache' }),
   schema: z.object({

@@ -25,16 +25,17 @@
   },
   "scripts": {
     "dev": "astro dev",
-    "predev": "node scripts/subset-fonts.mjs",
+    "predev": "node scripts/sync-portraits.mjs && node scripts/subset-fonts.mjs",
     "build": "astro build && pagefind --site dist --force-language zh --exclude-selectors \"script,style,.no-index\" && node scripts/check-api.mjs",
-    "prebuild": "node scripts/subset-fonts.mjs",
+    "prebuild": "node scripts/sync-portraits.mjs && node scripts/subset-fonts.mjs",
     "preview": "astro preview",
     "test": "vitest run",
     "test:watch": "vitest",
     "new": "node scripts/new-thinker.mjs",
     "sync": "node scripts/sync.mjs",
     "deploy": "node scripts/deploy.mjs",
-    "publish": "npm run sync && npm run build && npm run deploy",
-    "check": "astro check"
+    "publish": "npm run build && npm run deploy",
+    "check": "astro check",
+    "sync:portraits": "node scripts/sync-portraits.mjs"
   }
 }

@@ -1,3 +1,6 @@
+/**
+ * 遗留同步库。CLI 默认禁用（见 scripts/sync.mjs）。展馆真源 = git content/。
+ */
 import { createHash } from 'node:crypto';
 import { readFile, writeFile, mkdir, readdir, rm } from 'node:fs/promises';
 import path from 'node:path';

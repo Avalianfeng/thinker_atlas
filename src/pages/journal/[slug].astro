@@ -24,7 +24,7 @@ const thinker = thinkerId ? atlas.thinker(thinkerId) : atlas.thinkers[0];
         <span class="meta num">{entry.data.date ?? ''}</span>
       </div>
       <h1>{entry.data.title || entry.id}</h1>
-      <p class="meta">同步自 SilverBullet 的 <code>atlas/{entry.id}.md</code>；原稿在笔记中心编辑。</p>
+      <p class="meta">本地文件 <code>content/journal/{entry.id}.md</code>。</p>
       <Mdx entry={entry} />
       {refs.length > 0 && (
         <p class="meta">

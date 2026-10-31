@@ -7,9 +7,9 @@ const notes = [...atlas.sbnotes].sort((a, b) => a.data.page.localeCompare(b.data
 ---
 <Base title="笔记">
   <div class="page">
-    <h1>笔记中心里的相关笔记</h1>
+    <h1>本地笔记缓存（遗留）</h1>
     <p class="lede">
-      这里只放 <code>npm run sync</code> 从 SilverBullet 拉下来的只读副本（带 <code>atlas:</code> 标记的笔记）。原稿永远在笔记中心改，改完再同步一次。
+      <code>content/sb-cache/</code> 是遗留缓存目录。Atlas 独立运行后不再默认从外部笔记应用拉取；新内容请直接写进 <code>content/thinkers/</code>。
     </p>
     <ul class="listing">
       {notes.map((n) => (
@@ -20,7 +20,7 @@ const notes = [...atlas.sbnotes].sort((a, b) => a.data.page.localeCompare(b.data
         </li>
       ))}
       {notes.length === 0 && (
-        <li class="meta">还没有同步过笔记。在 SilverBullet 的笔记 frontmatter 里写 <code>atlas: wittgenstein</code>，然后运行 <code>npm run sync</code>。</li>
+        <li class="meta">缓存为空。日常写作请编辑 git 里的 <code>content/</code>。</li>
       )}
     </ul>
   </div>

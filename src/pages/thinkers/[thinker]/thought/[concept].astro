@@ -161,7 +161,7 @@ const sb = atlas.notesFor(d.id);
       </ul>
       {sb.length > 0 && (
         <>
-          <h3>笔记中心里的相关笔记</h3>
+          <h3>相关笔记（本地缓存）</h3>
           <ul class="side-list related-notes">
             {sb.map((n) => (
               <li><a href={`/notes/${n.id}/`}>{n.data.title}</a><span class="meta">{n.data.page}</span></li>

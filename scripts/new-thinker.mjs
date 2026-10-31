@@ -63,6 +63,7 @@ visibility: private
 
 <Todo>
 写一段入口：他是谁，你为什么现在加入他，你打算先读什么。
+真图：把 portrait.jpg 放到本目录或 public/portraits/<slug>.jpg，并在上方 frontmatter 加 portrait: /portraits/<slug>.jpg；无图时用字母占位。
 </Todo>
 `,
     'life.mdx': `---
@@ -168,9 +169,9 @@ visibility: private
   console.log(`已生成 content/thinkers/${slug}/`);
   console.log('下一步：');
   console.log('  1. 编辑 index.mdx 的姓名、生卒、强调色、分期');
-  console.log('  2. npm run dev 预览');
-  console.log('  3. 与别人物建立关系：在 content/relations/ 新建 <a>--<b>.mdx');
-  console.log('  4. npm run sync 会在 SilverBullet 生成该人物的入口页（atlas/_index/）');
+  console.log('  2. 放入真图：content/thinkers/' + slug + '/portrait.jpg 或 public/portraits/' + slug + '.jpg，并设 portrait: /portraits/' + slug + '.jpg');
+  console.log('  3. npm run dev 预览（无图时用字母占位）');
+  console.log('  4. 与别人物建立关系（可选）：在 content/relations/ 新建 <a>--<b>.mdx');
 }
 
 main().catch((e) => {

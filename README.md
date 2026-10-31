@@ -3,7 +3,7 @@
 一个**只给自己看**的思想展馆：每位人物一间展厅，沿着设计好的路径进入他的思想。纯静态站，**展馆真源 = git `content/`**，独立运行，**不依赖 SilverBullet**。内容以 Markdown + YAML 存在仓库里，逐段标注来源；构建时同时输出只读 JSON 接口。
 
 - 站点：Astro 7 + Content Collections + MDX，Zod 在构建时校验字段
-- 前端 JS：只有三个开关（来源显示 / 批注显示 / 亮暗切换），其余全是静态 HTML
+- 前端 JS：只有顶栏日月主题切换，其余全是静态 HTML
 - 私有：服务器 basic auth；`/api/` 另用 Bearer token；全站 `noindex`
 - 肖像：**真图优先**（`public/portraits/<slug>.*` 或 `content/thinkers/<slug>/portrait.*`）；无图才用字母占位
 
@@ -110,9 +110,9 @@ dist/api/v1/          构建产物 JSON
 
 `npm run build` 后提供 `/api/v1/…` 与 `/api/public/…`（仅 `visibility: public`）。版本号在路径里，字段只增不删。
 
-## 六、三个开关
+## 六、顶栏
 
-页头右侧：**来源**、**批注**、**夜读**。状态存 localStorage。
+页头只有站点标题（回首页）与一个日月主题切换；无主导航、无来源/批注开关。主题状态存 localStorage。
 
 ## 七、注意
 

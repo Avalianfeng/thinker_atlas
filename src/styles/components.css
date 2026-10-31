@@ -305,7 +305,7 @@ a.prop:hover {
 .concept-card .def {
   grid-column: 1 / -1;
   border-right: 0;
-  font-family: var(--font-sans);
+  font-family: var(--font-serif);
   font-size: var(--fs-body);
   line-height: var(--lh-body);
 }
@@ -500,7 +500,6 @@ a.prop:hover {
   white-space: nowrap;
 }
 .timeline-v .what {
-  font-family: var(--font-sans);
   line-height: 1.7;
 }
 .timeline-v .detail {

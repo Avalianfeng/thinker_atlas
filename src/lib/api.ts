@@ -1,6 +1,7 @@
 import type { Atlas, Thinker } from './atlas';
-import { parseId, conceptUrl, workUrl, thinkerUrl, journalRefs, journalTitle, yearOf } from './atlas';
+import { parseId, conceptUrl, workUrl, thinkerUrl, journalRefs, journalTitle, yearOf, journalId, journalUrl } from './atlas';
 import { provenanceStats } from './provenance';
+import { mdxToHtml } from './md';
 
 export const API_VERSION = 'v1';
 
@@ -20,17 +21,10 @@ export const apiFilter = <T extends { data: { visibility?: string } }>(xs: T[], 
 
 const visible = (x: { data: { visibility?: string } }) => x.data.visibility === 'public';
 
-/** 正文：同时给 Markdown 与渲染后的 HTML，任何工具都能读。 */
-export async function bodies(entry: { body?: string } | undefined) {
+/** 正文：同时给 Markdown 与降级渲染后的 HTML（组件按 docs/content-format.md §7 降级）。 */
+export function bodyOf(entry: { body?: string } | undefined) {
   if (!entry?.body) return { markdown: null, html: null };
-  const { render } = await import('astro:content');
-  try {
-    const { Content } = await render(entry as never);
-    // 简化：HTML 通过 Astro 的渲染拿到；无法渲染的组件会降级为空。
-    return { markdown: entry.body, html: String(Content ?? '') };
-  } catch {
-    return { markdown: entry.body, html: null };
-  }
+  return { markdown: entry.body, html: mdxToHtml(entry.body) };
 }
 
 function statsOfEntry(atlas: Atlas, id: string) {
@@ -61,7 +55,7 @@ export function conceptShape(atlas: Atlas, c: any, withBody = true) {
     visibility: d.visibility,
     updated: atlas.updatedOf(d.id) ?? null,
     provenance: statsOfEntry(atlas, d.id),
-    ...(withBody ? { body: { markdown: c.body ?? null, html: null } } : {}),
+    ...(withBody ? { body: bodyOf(c) } : {}),
   };
 }
 
@@ -85,7 +79,7 @@ export function workShape(atlas: Atlas, w: any, withBody = true) {
     visibility: d.visibility,
     updated: atlas.updatedOf(d.id) ?? null,
     provenance: statsOfEntry(atlas, d.id),
-    ...(withBody ? { body: { markdown: w.body ?? null, html: null } } : {}),
+    ...(withBody ? { body: bodyOf(w) } : {}),
   };
 }
 
@@ -115,7 +109,7 @@ export async function thinkerShape(atlas: Atlas, t: Thinker, withBody = true) {
   const life = atlas.life.get(t.id);
   const path = atlas.paths.get(t.id);
   const after = atlas.afterlife.get(t.id);
-  const relation = (x: any) => (x ? { markdown: x.body ?? null, html: null } : null);
+  const relation = (x: any) => (x ? bodyOf(x) : null);
   return {
     id: d.id,
     kind: 'thinker',
@@ -160,13 +154,13 @@ export async function thinkerShape(atlas: Atlas, t: Thinker, withBody = true) {
       ? { title: path.data.title, steps: path.data.steps, body: withBody ? relation(path) : undefined }
       : null,
     journal: atlas.journalFor(t.id).map((j) => ({
-      id: `atlas:journal/${j.id}`,
+      id: journalId(j.id),
       title: journalTitle(j),
       date: j.data.date ?? null,
-      url: `/journal/${j.id}/`,
-      ...(withBody ? { body: { markdown: j.body ?? null, html: null } } : {}),
+      url: journalUrl(j.id),
+      ...(withBody ? { body: bodyOf(j) } : {}),
     })),
-    ...(withBody ? { body: { markdown: t.body ?? null, html: null } } : {}),
+    ...(withBody ? { body: bodyOf(t) } : {}),
   };
 }
 
@@ -219,14 +213,14 @@ export function graphShape(atlas: Atlas, scope?: string | null) {
 
 export function journalShape(j: any) {
   return {
-    id: `atlas:journal/${j.id}`,
+    id: journalId(j.id),
     title: journalTitle(j),
     date: j.data.date ?? null,
     tags: j.data.tags ?? [],
     atlas: journalRefs(j),
-    url: `/journal/${j.id}/`,
+    url: journalUrl(j.id),
     visibility: j.data.visibility,
-    body: { markdown: j.body ?? null, html: null },
+    body: bodyOf(j),
   };
 }
 

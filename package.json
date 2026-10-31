@@ -23,7 +23,7 @@
   "scripts": {
     "dev": "astro dev",
     "predev": "node scripts/subset-fonts.mjs",
-    "build": "astro build && pagefind --site dist --force-language zh --exclude-selectors \"script,style,.no-index\"",
+    "build": "astro build && pagefind --site dist --force-language zh --exclude-selectors \"script,style,.no-index\" && node scripts/check-api.mjs",
     "prebuild": "node scripts/subset-fonts.mjs",
     "preview": "astro preview",
     "test": "vitest run",

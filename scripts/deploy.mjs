@@ -20,21 +20,24 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const dist = path.join(root, 'dist');
+// 构建产物目录：默认仓库根的 dist/；可用 DEPLOY_DIST 覆盖（测试与特殊布局用）
+const dist = path.resolve(process.env.DEPLOY_DIST || path.join(root, 'dist'));
 
 const { DEPLOY_HOST, DEPLOY_USER, DEPLOY_PATH, DEPLOY_PORT, DEPLOY_SSH_KEY } = process.env;
 const dryRun = process.env.DEPLOY_DRY_RUN === '1' || process.argv.includes('--dry-run');
 
-function fail(msg) {
+const EXIT_CONFIG = 2;
+
+function fail(msg, code = 1) {
   console.error(`部署中止：${msg}`);
-  console.error('请在 .env 里配置 DEPLOY_HOST / DEPLOY_USER / DEPLOY_PATH（见 .env.example）。');
-  process.exit(1);
+  if (code === EXIT_CONFIG) console.error('请在 .env 里配置 DEPLOY_HOST / DEPLOY_USER / DEPLOY_PATH（见 .env.example）。');
+  process.exit(code);
 }
 
 if (!existsSync(path.join(dist, 'index.html'))) fail('dist/ 里没有构建产物，先运行 npm run build');
-if (!DEPLOY_HOST) fail('缺少 DEPLOY_HOST');
-if (!DEPLOY_USER) fail('缺少 DEPLOY_USER');
-if (!DEPLOY_PATH) fail('缺少 DEPLOY_PATH');
+if (!DEPLOY_HOST) fail('缺少 DEPLOY_HOST', EXIT_CONFIG);
+if (!DEPLOY_USER) fail('缺少 DEPLOY_USER', EXIT_CONFIG);
+if (!DEPLOY_PATH) fail('缺少 DEPLOY_PATH', EXIT_CONFIG);
 
 const ssh = ['ssh'];
 if (DEPLOY_PORT) ssh.push('-p', DEPLOY_PORT);
@@ -55,6 +58,6 @@ if (dryRun) args.splice(1, 0, '--dry-run', '-v');
 
 console.log(`rsync ${dist}/ → ${DEPLOY_USER}@${DEPLOY_HOST}:${DEPLOY_PATH}/${dryRun ? '（演练）' : ''}`);
 const r = spawnSync('rsync', args, { stdio: 'inherit' });
-if (r.error) fail(`无法运行 rsync：${r.error.message}`);
+if (r.error) fail(`无法运行 rsync（本机没装？）：${r.error.message}`, r.error.code === 'ENOENT' ? 127 : 1);
 if (r.status !== 0) fail(`rsync 退出码 ${r.status}`);
 console.log('完成。若 Caddy 有缓存策略，记得按需 reload。');

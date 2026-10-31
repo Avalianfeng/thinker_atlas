@@ -163,7 +163,11 @@ const relations = defineCollection({
 });
 
 const journal = defineCollection({
-  loader: glob({ pattern: ['**/*.md', '!**/*.conflict.md'], base: './content/journal' }),
+  loader: glob({
+    pattern: ['**/*.md', '!**/*.conflict.md'],
+    base: './content/journal',
+    generateId: ({ entry }) => entry.replace(/\.md$/, ''),
+  }),
   schema: z.looseObject({
     title: z.string().optional(),
     date: fuzzyDate.optional(),

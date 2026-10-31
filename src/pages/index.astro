@@ -101,12 +101,6 @@ for (const t of atlas.thinkers) total = addStats(total, atlas.statsOf(t.id));
     min-width: 220px;
     display: flex;
   }
-  body:has(#sort-year:checked) .wall {
-    display: flex;
-  }
-  body:has(#sort-year:checked) .wall-cell {
-    order: var(--o-year);
-  }
   .wall-cell :global(.placard) {
     flex: 1;
   }

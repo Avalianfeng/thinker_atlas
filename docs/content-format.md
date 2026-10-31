@@ -16,6 +16,7 @@ updated: 2026-10-31
 - **稳定 ID**：每个实体都有永不改变的 `id`，写法是 `atlas:<人物>` 或 `atlas:<人物>/<条目>`，全小写、连字符分隔。文件可以改名、搬家、换语言，ID 不动。其他站点、SilverBullet、JSON 接口一律用 ID 引用。
 - **日期**：写作 `1889`、`1889-04` 或 `1889-04-26`，加引号以免 YAML 误解析。显示时生卒年用破折号：`1889—1951`。
 - **`visibility`**：`private`（默认）或 `public`。只有 `public` 的条目进入 `dist/api/public/`。
+  本仓库的示例状态：维特根斯坦与荣格为 `public`，卢卡奇与费耶阿本德为 `private`，用来演示这份子集确实在过滤；你自己的内容默认保持 `private`。
 - **`provenance`**：`own` / `own-discussed` / `transcribed` / `quote` / `secondary` / `ai-excerpt`。未标注的正文默认为 `own`。**AI 不直接生成内容入库**，`ai-excerpt` 只用于少数必须保留的摘录，且在页面上弱化显示。
 - **正文组件**（MDX）：`<Block>`、`<Quote>`、`<Note>`、`<Sidenote>`、`<Todo>`、`<Dialogue>`、`<Say>`、`<Prop>`、`<SBNote>`。每个组件都有纯文本降级写法（见 §7）。
 

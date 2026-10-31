@@ -61,13 +61,25 @@ async function collectChars() {
     for (const line of text.split('\n')) {
       if (/^#{1,6}\s/.test(line)) for (const ch of line.replace(/<[^>]*>/g, '')) bump(ui, ch);
     }
+    // frontmatter 里只有这些字段会以黑体出现在页面上（名字、领域、标题、分期名、事件类名等）；
+    // intro / definition / summary 之类是正文，用宋体，不算进黑体子集。
     const fm = /^---\r?\n([\s\S]*?)\r?\n---/.exec(text);
-    if (fm) for (const ch of fm[1]) bump(ui, ch);
+    if (fm) {
+      for (const line of fm[1].split('\n')) {
+        if (/^\s*(zh|en|original|fields|maturity|title|label|place|kind|alt_titles|editions|reading):/.test(line)) {
+          for (const ch of line.replace(/^\s*[a-z_]+:\s*/, '')) bump(ui, ch);
+        }
+        if (/^\s*-\s+\S/.test(line) && line.length < 40) {
+          // 列表项（领域、译名、版本）也常以黑体显示
+          for (const ch of line.replace(/^\s*-\s+/, '')) bump(ui, ch);
+        }
+      }
+    }
     // 加粗：宋体 600 只需这些字（Markdown 的 **粗体** 与 <strong>，以及标题行里的强调）
     for (const m of text.matchAll(/\*\*([^*]+)\*\*|<strong>([\s\S]*?)<\/strong>/g)) {
       for (const ch of (m[1] ?? m[2] ?? '').replace(/<[^>]*>/g, '')) bump(bold, ch);
     }
-    for (const ch of BASE_CHARS) bump(bold, ch);
+
     // 旁注与批注标题、概念卡等以黑体显示
     for (const m of text.matchAll(/<(Sidenote|Note)\b[^>]*>([\s\S]*?)<\/\1>/g)) {
       for (const ch of m[2].replace(/<[^>]*>/g, '')) bump(ui, ch);
@@ -109,11 +121,11 @@ const SHARED_PUNCT = new Set([0x2014, 0x2015, 0x2018, 0x2019, 0x201c, 0x201d, 0x
 // 每种字重只带自己会用到的字：宋体 400 是正文全量，宋体 600 只是加粗处，黑体只带页面 chrome 与标题。
 // 缺字时按字体栈回退到宋体，只是字形不同，不会出豆腐块。
 const FACES = [
-  // 字重只保留真正用到的：正文宋体 400 与加粗 600，标题与界面黑体 400 与 500。
-  // 每块按字频切片，首屏只需最常用的那一块。
+  // 字重只保留真正用到的：正文宋体 400 与加粗 600；黑体用一个文件覆盖 400–600
+  // （中文一个字重就是几十 KB，不该为字重重复下载）。每块按字频切片，首屏只需最常用的那一块。
   { family: 'Noto Serif SC', pkg: 'noto-serif-sc', weights: [400], set: 'all' },
   { family: 'Noto Serif SC', pkg: 'noto-serif-sc', weights: [600], set: 'bold' },
-  { family: 'Noto Sans SC', pkg: 'noto-sans-sc', weights: [400, 500], set: 'ui' },
+  { family: 'Noto Sans SC', pkg: 'noto-sans-sc', weights: [400], set: 'ui', weightRange: '400 600' },
 ];
 const GARAMOND = [
   { weight: 400, style: 'normal' },

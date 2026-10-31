@@ -3,7 +3,7 @@ import Mdx from '@components/Mdx.astro';
 import Hall from '@layouts/Hall.astro';
 import ConceptCard from '@components/ConceptCard.astro';
 import ProvenanceBar from '@components/ProvenanceBar.astro';
-import { getAtlas, conceptUrl, workUrl, parseId } from '@lib/atlas';
+import { getAtlas, conceptUrl, parseId } from '@lib/atlas';
 import { extractNotes, provenanceStats } from '@lib/provenance';
 import { render } from 'astro:content';
 import { formatDay } from '@lib/git';
@@ -42,10 +42,10 @@ const sb = atlas.notesFor(d.id);
           {headings.filter((h) => h.depth <= 3).map((h) => (
             <li class={`depth-${h.depth}`}><a href={`#${h.slug}`}>{h.text}</a></li>
           ))}
+          {evolutions.length > 0 && <li><a href="#evolution">演变</a></li>}
+          {interlocutors.length > 0 && <li><a href="#interlocutors">对话者</a></li>}
+          {notes.length > 0 && <li><a href="#my-notes">我的批注</a></li>}
         </ol>
-        {evolutions.length > 0 && <li style="list-style:none"><a href="#evolution">演变</a></li>}
-        {interlocutors.length > 0 && <li style="list-style:none"><a href="#interlocutors">对话者</a></li>}
-        {notes.length > 0 && <li style="list-style:none"><a href="#my-notes">我的批注</a></li>}
       </div>
     </aside>
     <details class="toc-bar">
@@ -55,6 +55,9 @@ const sb = atlas.notesFor(d.id);
           {headings.filter((h) => h.depth <= 3).map((h) => (
             <li class={`depth-${h.depth}`}><a href={`#${h.slug}`}>{h.text}</a></li>
           ))}
+          {evolutions.length > 0 && <li><a href="#evolution">演变</a></li>}
+          {interlocutors.length > 0 && <li><a href="#interlocutors">对话者</a></li>}
+          {notes.length > 0 && <li><a href="#my-notes">我的批注</a></li>}
         </ol>
       </div>
     </details>

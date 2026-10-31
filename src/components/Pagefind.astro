@@ -1,7 +1,8 @@
 ---
-// Pagefind 索引只在 npm run build 后生成；开发服务器下不加载。
+// Pagefind 索引在 npm run build 之后才存在；开发服务器下不加载。
+// 只有真正用到搜索时才去加载 pagefind.js（点进搜索页，或聚焦页脚搜索框）。
 ---
-<div id="search-ui" class="search-ui no-print">
+<div id="search-ui" class="search-ui no-print" data-pagefind-ignore>
   <input id="search-input" type="search" placeholder="搜索概念、人物、作品……" autocomplete="off" aria-label="站内搜索" />
   <div id="search-results" class="search-results" aria-live="polite"></div>
 </div>
@@ -10,40 +11,49 @@
   const input = document.getElementById('search-input') as HTMLInputElement | null;
   const results = document.getElementById('search-results') as HTMLElement | null;
   let pagefind: any = null;
+  let loading: Promise<void> | null = null;
 
-  async function load() {
-    if (!input) return;
-    try {
-      pagefind = await import(/* @vite-ignore */ '/pagefind/pagefind.js');
-      await pagefind.options({ excerptLength: 40 });
-      await pagefind.init();
-    } catch {
-      input.placeholder = '搜索索引仅在构建后可用（npm run build）';
-      input.disabled = true;
-    }
+  async function load(): Promise<void> {
+    if (!input || loading) return loading ?? Promise.resolve();
+    loading = (async () => {
+      try {
+        pagefind = await pagefindImport();
+        await pagefind.options({ excerptLength: 45 });
+        await pagefind.init();
+      } catch {
+        input.placeholder = '搜索索引仅在构建后可用（npm run build）';
+      }
+    })();
+    return loading;
   }
 
+  // 用变量做 import，避免打包器把它当成可解析的模块
+  const pagefindImport = () => import(/* @vite-ignore */ '/pagefind/pagefind.js');
+
   let timer: number | undefined;
+  async function run() {
+    if (!input || !results) return;
+    await load();
+    const q = input.value.trim();
+    if (!q) {
+      results.innerHTML = '';
+      return;
+    }
+    if (!pagefind) return;
+    const search = await pagefind.search(q);
+    const items = await Promise.all(search.results.slice(0, 12).map((r: any) => r.data()));
+    results.innerHTML = items
+      .map(
+        (d: any) =>
+          `<a class="result" href="${d.url}"><span class="rt">${d.meta.title || d.url}</span><span class="re">${d.excerpt}</span></a>`,
+      )
+      .join('');
+    if (!items.length) results.innerHTML = '<p class="meta">没有找到。换个词试试。</p>';
+  }
+
+  input?.addEventListener('focus', () => load(), { once: true });
   input?.addEventListener('input', () => {
     clearTimeout(timer);
-    timer = window.setTimeout(async () => {
-      if (!pagefind || !results) return;
-      const q = input.value.trim();
-      if (!q) {
-        results.innerHTML = '';
-        return;
-      }
-      const search = await pagefind.search(q);
-      const items = await Promise.all(search.results.slice(0, 12).map((r: any) => r.data()));
-      results.innerHTML = items
-        .map(
-          (d: any) =>
-            `<a class="result" href="${d.url}"><span class="rt">${d.meta.title || d.url}</span><span class="re">${d.excerpt}</span></a>`,
-        )
-        .join('');
-      if (!items.length) results.innerHTML = '<p class="meta">没有找到。换个词试试。</p>';
-    }, 180);
+    timer = window.setTimeout(run, 180);
   });
-
-  load();
 </script>

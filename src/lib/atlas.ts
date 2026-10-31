@@ -40,6 +40,8 @@ export interface Atlas {
   journal: Journal[];
   sbnotes: SBNoteEntry[];
   entities: Map<string, EntityRef>;
+  /** 随笔的稳定 ID → 页面地址，供接口与页面共用 */
+  journalUrl: (id: string) => string;
   thinker(id: string): Thinker;
   conceptsOf(id: string): Concept[];
   worksOf(id: string): Work[];
@@ -50,6 +52,21 @@ export interface Atlas {
   updatedOf(id: string): string | undefined;
   ref(id: string): EntityRef;
 }
+
+/** 随笔的稳定 ID 与页面地址。文件名（含中文）只用于 URL，ID 用 ASCII slug。 */
+export const journalId = (id: string) => {
+  const ascii = id
+    .replace(/\.md$/, '')
+    .split('/')
+    .map((seg) =>
+      /^[a-z0-9-]+$/i.test(seg)
+        ? seg.toLowerCase()
+        : [...seg].map((ch) => (/[a-z0-9-]/i.test(ch) ? ch.toLowerCase() : `u${ch.codePointAt(0)!.toString(16)}`)).join(''),
+    )
+    .join('/');
+  return `atlas:journal/${ascii}`;
+};
+export const journalUrl = (id: string) => `/journal/${id}/`;
 
 export const journalRefs = (j: Journal) => asArray(j.data.atlas as string | string[] | undefined).map(normalizeRef);
 export const journalTitle = (j: Journal) => (j.data.title as string | undefined) || j.id.split('/').pop()!;
@@ -114,7 +131,7 @@ async function build(): Promise<Atlas> {
     p.data.steps.forEach((s) => s.refs.forEach((x) => check(x, p.filePath!)));
   }
   for (const j of journal) {
-    add({ id: `atlas:journal/${j.id.replace(/[^a-z0-9-]+/gi, '-').toLowerCase()}`, kind: 'journal', title: journalTitle(j), url: `/journal/${j.id}/` });
+    add({ id: journalId(j.id), kind: 'journal', title: journalTitle(j), url: journalUrl(j.id) });
     for (const r of journalRefs(j)) if (!entities.has(r)) console.warn(`[atlas] 随笔 ${j.filePath} 的 atlas: ${r} 未找到对应条目`);
   }
   for (const n of sbnotes)
@@ -141,6 +158,7 @@ async function build(): Promise<Atlas> {
     journal,
     sbnotes,
     entities,
+    journalUrl,
     thinker: (id) => {
       const t = thinkers.find((x) => x.id === id);
       if (!t) throw new Error(`未知人物 ${id}`);
@@ -216,7 +234,16 @@ export function entityForFile(atlas: Atlas, file: string): EntityRef | undefined
     }
   }
   const rel = atlas.relations.find((r) => r.filePath === file);
-  if (rel) return { id: rel.id, kind: 'concept', title: `关系 · ${rel.data.summary.slice(0, 16)}`, url: '/genealogy/' };
+  if (rel) {
+    const a = atlas.entities.get(rel.data.from)?.title ?? rel.data.from;
+    const b = atlas.entities.get(rel.data.to)?.title ?? rel.data.to;
+    return {
+      id: rel.id,
+      kind: 'concept',
+      title: `关系 · ${a} ${rel.data.directed ? '→' : '↔'} ${rel.data.type} ${b}`,
+      url: `/genealogy/?thinker=${rel.data.from.split('/')[0].replace('atlas:', '')}`,
+    };
+  }
   const j = atlas.journal.find((x) => x.filePath === file);
   if (j) return { id: j.id, kind: 'journal', title: `随笔 · ${journalTitle(j)}`, url: `/journal/${j.id}/` };
   return undefined;

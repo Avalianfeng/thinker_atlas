@@ -778,11 +778,12 @@ a.prop:hover {
 .sorter input:focus-visible + label {
   outline: 2px solid var(--p-own);
 }
-.placard {
-  order: var(--o-join);
+.wall-cell {
+  order: var(--o-join, 0);
 }
-body:has(#sort-year:checked) .wall .placard {
-  order: var(--o-year);
+/* 展厅墙排序：纯 CSS，靠 :has 读单选框状态，无 JS */
+body:has(#sort-year:checked) .wall-cell {
+  order: var(--o-year, 0);
 }
 
 /* ---------- 展厅头部 ---------- */

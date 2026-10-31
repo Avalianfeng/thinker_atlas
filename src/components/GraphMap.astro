@@ -45,13 +45,17 @@ const edges = relations
     const spread = r.data.type === '平行' || !r.data.directed ? 4 + (idx % 3) * 6 : 12;
     const ya = laneY(ia);
     const yb = laneY(ib);
-    const xa = x(anchorYear(r.data.from, r.data.since, 0));
-    const xb = x(anchorYear(r.data.to, r.data.since, spread));
+    const rawA = x(anchorYear(r.data.from, r.data.since, 0));
+    const rawB = x(anchorYear(r.data.to, r.data.since, spread));
+    // 缩略图：拉成垂直连线，免得斜线被误读成某人的生命周期
+    const xa = mini ? (rawA + rawB) / 2 : rawA;
+    const xb = mini ? (rawA + rawB) / 2 : rawB;
     const y1 = ya - 6;
     const y2 = yb - 6;
     const mx = (xa + xb) / 2 + (idx % 2 ? 26 : -26);
+    const d = mini ? `M${xa} ${y1} L${xb} ${y2}` : `M${xa} ${y1} C${mx} ${y1}, ${mx} ${y2}, ${xb} ${y2}`;
     return {
-      d: `M${xa} ${y1} C${mx} ${y1}, ${mx} ${y2}, ${xb} ${y2}`,
+      d,
       type: r.data.type,
       verified: r.data.verified,
       id: r.data.id,

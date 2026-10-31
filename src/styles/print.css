@@ -67,3 +67,43 @@
     break-inside: avoid;
   }
 }
+
+  /* 展牌与卡片在打印时单列堆叠，避免被横向挤压 */
+  .wall,
+  .card-grid,
+  .period-groups,
+  .home-cols,
+  .rooms,
+  .hall-head {
+    display: block !important;
+  }
+  .wall-cell,
+  .placard {
+    flex-basis: auto !important;
+    width: auto !important;
+    min-width: 0 !important;
+    margin-bottom: 12pt;
+    break-inside: avoid;
+  }
+  .placard .portrait {
+    max-width: 120pt;
+  }
+  .card-grid > a,
+  .period-groups section {
+    border: 0;
+    border-bottom: 1px solid var(--rule);
+    padding: 6pt 0;
+  }
+  .graph-wrap {
+    overflow: visible !important;
+    border: 0;
+  }
+  .graph,
+  .mtl {
+    max-width: 100%;
+  }
+  .search-ui,
+  .filter-bar,
+  .pbar .bar {
+    display: none !important;
+  }

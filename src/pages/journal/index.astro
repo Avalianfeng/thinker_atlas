@@ -9,7 +9,7 @@ const entries = [...atlas.journal].sort((a, b) => String(b.data.date ?? '').loca
   <div class="page">
     <h1>随笔</h1>
     <p class="lede">
-      <code>content/journal/</code> 里的思考随笔，与 SilverBullet 的 <code>atlas/</code> 文件夹双向同步。结构化的东西放在展厅里，这里存过程。
+      <code>content/journal/</code> 里的本地思考随笔（可选）。结构化正文请写在人物展厅；这里只存过程草稿。Atlas 独立运行，不再与外部笔记应用双向同步。
     </p>
     <ul class="listing journal">
       {entries.map((j) => (
@@ -21,7 +21,7 @@ const entries = [...atlas.journal].sort((a, b) => String(b.data.date ?? '').loca
           </span>
         </li>
       ))}
-      {entries.length === 0 && <li class="meta">还没有随笔。运行 <code>npm run sync</code> 从 SilverBullet 的 atlas/ 拉取，或直接在 content/journal/ 里新建。</li>}
+      {entries.length === 0 && <li class="meta">还没有随笔。直接在 <code>content/journal/</code> 新建 Markdown 即可。</li>}
     </ul>
   </div>
 </Base>

@@ -7,6 +7,7 @@ import TimelineH from '@components/TimelineH.astro';
 import ProvenanceBar from '@components/ProvenanceBar.astro';
 import Relation from '@components/Relation.astro';
 import { getAtlas, lifespan, yearOf, conceptUrl } from '@lib/atlas';
+import { resolvePortrait, thinkerSlug } from '@lib/portrait';
 import { formatDay } from '@lib/git';
 
 export async function getStaticPaths() {
@@ -34,10 +35,11 @@ const rooms = [
   { label: '学习路径', href: `${base}/path/`, desc: '有序阅读与检查点', n: atlas.paths.has(thinker.id) ? '06' : '—' },
 ];
 const epigraph = t.epigraph;
+const portraitSrc = resolvePortrait(thinkerSlug(thinker.id), t.portrait);
 ---
 <Hall atlas={atlas} thinker={thinker} title={t.name.zh}>
   <header class="hall-head">
-    <Portrait class="portrait" name={t.name.zh} original={t.name.original || t.name.en} years={years} accent={t.accent} src={t.portrait} />
+    <Portrait class="portrait" name={t.name.zh} original={t.name.original || t.name.en} years={years} accent={t.accent} src={portraitSrc} />
     <div>
       <h1>{t.name.zh}</h1>
       <div class="orig">{t.name.original || t.name.en}</div>

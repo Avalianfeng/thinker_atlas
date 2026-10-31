@@ -8,6 +8,7 @@
     "@astrojs/mdx": "^8.1.2",
     "@fontsource/noto-sans-sc": "^5.3.1",
     "@fontsource/noto-serif-sc": "^5.3.1",
+    "@fontsource/source-serif-4": "^5.3.1",
     "astro": "^7.4.4",
     "dotenv": "^18.0.9",
     "js-yaml": "^5.5.0",

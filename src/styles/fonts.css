@@ -1,4 +1,8 @@
-/* 自托管 Noto：字重仅 400/500；unicode-range 分包由 @fontsource 提供。 */
+/* 自托管：Source Serif 4（拉丁）+ Noto Serif/Sans SC；字重 400/500 + italic；unicode-range 分包由 @fontsource 提供。 */
+@import '@fontsource/source-serif-4/400.css';
+@import '@fontsource/source-serif-4/400-italic.css';
+@import '@fontsource/source-serif-4/500.css';
+@import '@fontsource/source-serif-4/500-italic.css';
 @import '@fontsource/noto-serif-sc/400.css';
 @import '@fontsource/noto-serif-sc/500.css';
 @import '@fontsource/noto-sans-sc/400.css';

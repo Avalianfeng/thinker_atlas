@@ -915,18 +915,11 @@ html[data-wall-view='cards'] .placard .zh,
   object-fit: cover;
 }
 
-/* 展厅墙视图切换 */
+/* 展厅墙视图切换：单按钮翻转 detail↔cards */
 .view-switch {
   font-family: var(--font-sans);
   font-size: var(--fs-small);
-  color: var(--ink-2);
-  display: flex;
-  gap: calc(var(--u) * 2);
-  align-items: center;
   margin-bottom: calc(var(--u) * 3);
-}
-.view-switch-label {
-  letter-spacing: 0.08em;
 }
 .view-btn {
   font: inherit;
@@ -937,13 +930,10 @@ html[data-wall-view='cards'] .placard .zh,
   padding: 2px 0;
   cursor: pointer;
 }
-.view-btn[aria-pressed='true'] {
-  color: var(--ink);
-  border-bottom-color: var(--ink);
-}
 .view-btn:hover,
 .view-btn:focus-visible {
   color: var(--ink);
+  border-bottom-color: var(--ink);
 }
 .view-btn:focus-visible {
   outline: 2px solid var(--ink-2);

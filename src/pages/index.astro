@@ -2,10 +2,10 @@
 import Base from '@layouts/Base.astro';
 import Placard from '@components/Placard.astro';
 import MultiTimeline from '@components/MultiTimeline.astro';
-import { getAtlas, entityForFile, personUrl } from '@lib/atlas';
-import { recentCommits, formatDay } from '@lib/git';
+import { getAtlas, personUrl } from '@lib/atlas';
 import { loadMultiLanes } from '@lib/timeline-yml';
 import { accentMapForPeople, type AccentPerson } from '@lib/accents';
+import { resolvePortrait, personSlug } from '@lib/portrait';
 
 const atlas = await getAtlas();
 /** 展厅墙默认按出生年排；无出生年靠后，同岁按 name 稳定排 */
@@ -35,14 +35,22 @@ const multiLanes = loadMultiLanes(
   })),
 );
 
-const recent = recentCommits(40)
-  .flatMap((c) => c.files.map((f) => ({ file: f, date: c.date, subject: c.subject })))
-  .map((r) => ({ ...r, entity: entityForFile(atlas, r.file) }))
-  .filter((r) => r.entity)
-  .filter((r, i, arr) => arr.findIndex((x) => x.entity!.id === r.entity!.id) === i)
-  .slice(0, 6);
+/** 首页沙龙挂墙：按出生年，带解析后的 src */
+const wallTiles = byBorn.map((p) => {
+  const slug = personSlug(p.id);
+  const t = p.data;
+  return {
+    id: p.id,
+    name: t.name as string,
+    nameEn: (t.name_en as string) || '',
+    url: personUrl(p.id),
+    src: resolvePortrait(slug, t.portrait as string | undefined) || '',
+    accent: accentById.get(p.id)!,
+    initial: ((t.name_en as string) || (t.name as string)).trim().charAt(0),
+  };
+});
 ---
-<Base title="展厅墙" description="私人思想展馆：一人一夹，标准 Markdown">
+<Base title="展厅墙" description="私人思想展馆">
   <script is:inline>
     (() => {
       const v = localStorage.getItem('atlas:wall-view');
@@ -50,18 +58,100 @@ const recent = recentCommits(40)
     })();
   </script>
   <div class="page">
-    <section class="wall-hero">
-      <h1>思想的展厅</h1>
-      <p class="lede">
-        每个人物是一间展厅。内容在 git 的 <code>content/people/</code>，标准 Markdown，独立构建。
-      </p>
-      <p class="meta">目前 {atlas.people.length} 位人物 · {atlas.pieces.length} 篇正文</p>
+    <section class="wall-hero" aria-label="肖像墙">
+      {/*
+        沙龙挂墙：槽位固定（主大 + 侧翼小重叠），JS 只轮换主位内容。
+        人物数据挂在 data-hero-wall 上供轮播读取。
+      */}
+      <div
+        class="salon-hang"
+        data-hero-wall
+        data-tiles={JSON.stringify(
+          wallTiles.map((t) => ({
+            name: t.name,
+            url: t.url,
+            src: t.src,
+            accent: t.accent,
+            initial: t.initial,
+          })),
+        )}
+      >
+        {wallTiles.length > 0 && (
+          <a
+            class="salon-frame salon-frame--main is-active"
+            href={wallTiles[0].url}
+            style={`--accent:${wallTiles[0].accent}`}
+            data-slot="main"
+            aria-label={wallTiles[0].name}
+          >
+            <span class="salon-mat">
+              <img
+                class="salon-img"
+                src={wallTiles[0].src || undefined}
+                alt=""
+                width="200"
+                height="267"
+                loading="eager"
+                hidden={!wallTiles[0].src}
+              />
+              <span class="salon-fallback" aria-hidden="true" hidden={!!wallTiles[0].src}>{wallTiles[0].initial}</span>
+            </span>
+            <span class="salon-tombstone">{wallTiles[0].name}</span>
+          </a>
+        )}
+        {wallTiles.length > 1 && (
+          <a
+            class="salon-frame salon-frame--wing"
+            href={wallTiles[1].url}
+            style={`--accent:${wallTiles[1].accent}`}
+            data-slot="wing"
+            data-wing="0"
+            aria-label={wallTiles[1].name}
+          >
+            <span class="salon-mat">
+              <img
+                class="salon-img"
+                src={wallTiles[1].src || undefined}
+                alt=""
+                width="140"
+                height="187"
+                loading="lazy"
+                hidden={!wallTiles[1].src}
+              />
+              <span class="salon-fallback" aria-hidden="true" hidden={!!wallTiles[1].src}>{wallTiles[1].initial}</span>
+            </span>
+            <span class="salon-tombstone">{wallTiles[1].name}</span>
+          </a>
+        )}
+        {wallTiles.length > 2 && (
+          <a
+            class="salon-frame salon-frame--wing salon-frame--wing-2"
+            href={wallTiles[2].url}
+            style={`--accent:${wallTiles[2].accent}`}
+            data-slot="wing"
+            data-wing="1"
+            aria-label={wallTiles[2].name}
+          >
+            <span class="salon-mat">
+              <img
+                class="salon-img"
+                src={wallTiles[2].src || undefined}
+                alt=""
+                width="120"
+                height="160"
+                loading="lazy"
+                hidden={!wallTiles[2].src}
+              />
+              <span class="salon-fallback" aria-hidden="true" hidden={!!wallTiles[2].src}>{wallTiles[2].initial}</span>
+            </span>
+            <span class="salon-tombstone">{wallTiles[2].name}</span>
+          </a>
+        )}
+      </div>
     </section>
 
-    <div class="view-switch" role="group" aria-label="视图">
-      <span class="view-switch-label">视图</span>
-      <button type="button" class="view-btn" data-wall-view="detail" aria-pressed="true">详牌</button>
-      <button type="button" class="view-btn" data-wall-view="cards" aria-pressed="false">卡片</button>
+    <div class="view-switch">
+      <button type="button" class="view-btn" id="tg-wall-view" aria-label="切换到卡片">卡片</button>
     </div>
 
     <section class="wall" aria-label="人物展牌">
@@ -83,32 +173,9 @@ const recent = recentCommits(40)
       })();
     </script>
 
-    <div class="home-cols">
-      <section>
-        <h2 class="section-title">最近修改</h2>
-        <ul class="listing">
-          {recent.map((r) => (
-            <li>
-              <a href={r.entity!.url}>{r.entity!.title}</a>
-              <span class="meta num">{formatDay(r.date)}</span>
-            </li>
-          ))}
-          {recent.length === 0 && <li class="meta">暂无提交记录。</li>}
-        </ul>
-      </section>
-      <section>
-        <h2 class="section-title">从这里开始</h2>
-        <ul class="listing">
-          <li><a href={personUrl('wittgenstein')}>维特根斯坦</a><span class="meta">样例展厅</span></li>
-          <li><a href={personUrl('russell')}>罗素</a><span class="meta">多人线样例</span></li>
-        </ul>
-      </section>
-    </div>
-
     {multiLanes.length > 0 && (
       <section class="home-multi" aria-label="多人时间线">
         <h2 class="section-title">多人时间线</h2>
-        <p class="meta mtl-lede">各人一条线（生于—卒年，冷色分行）；只显示标了 multi 的事件。事件类型用形状区分。短标题同行避让；悬停或点击看全文与时年；点空白或 Esc 关闭。可横向拖动。标记不跳转。</p>
         <MultiTimeline lanes={multiLanes} />
       </section>
     )}
@@ -116,38 +183,148 @@ const recent = recentCommits(40)
 </Base>
 
 <style>
+  /* 展馆 lobby：重叠拼贴 / 沙龙挂墙（非第二排卡片） */
   .wall-hero {
-    padding: calc(var(--u) * 4) 0 calc(var(--u) * 5);
-    border-bottom: 1px solid var(--rule);
+    /* 底距留出 hang 内 tombstone 探出量，避免压到下方 view-switch */
+    padding: calc(var(--u) * 3) 0 calc(var(--u) * 7);
     margin-bottom: calc(var(--u) * 4);
   }
-  .wall-hero h1 {
-    font-size: 40px;
-    letter-spacing: 0.06em;
+  .salon-hang {
+    position: relative;
+    width: min(100%, 380px);
+    /* 绝对定位框不撑高：用够用的 min-height + 底 padding 容纳 tombstone，勿用矮 height 裁切 */
+    min-height: clamp(280px, 44vw, 340px);
+    margin: 0;
+    padding-bottom: 1.6em;
   }
-  .lede {
-    font-size: 20px;
-    max-width: 640px;
-    line-height: 1.8;
+  .salon-frame {
+    --accent: var(--ink-2);
+    position: absolute;
+    display: block;
+    text-decoration: none;
+    color: inherit;
+    z-index: 1;
   }
-  .home-cols {
+  /* 主框：缩小后的挂墙主位 */
+  .salon-frame--main {
+    width: min(48%, 168px);
+    left: 8%;
+    top: 6%;
+    z-index: 3;
+    transform: rotate(-1.5deg);
+  }
+  /* 侧翼：略小、重叠、2–4° 倾 */
+  .salon-frame--wing {
+    width: min(34%, 118px);
+    left: 46%;
+    top: 18%;
+    z-index: 2;
+    transform: rotate(3.2deg);
+  }
+  .salon-frame--wing-2 {
+    left: 62%;
+    top: 8%;
+    width: min(30%, 104px);
+    transform: rotate(-2.8deg);
+    z-index: 1;
+  }
+  .salon-mat {
+    display: block;
+    background: var(--paper);
+    border: 1px solid var(--rule);
+    padding: 7px 7px 18px;
+    box-shadow:
+      0 1px 0 rgba(31, 29, 26, 0.04),
+      0 8px 22px rgba(31, 29, 26, 0.1);
+  }
+  [data-theme='dark'] .salon-mat {
+    box-shadow:
+      0 1px 0 rgba(0, 0, 0, 0.2),
+      0 8px 22px rgba(0, 0, 0, 0.35);
+  }
+  .salon-img,
+  .salon-fallback {
+    display: block;
+    width: 100%;
+    aspect-ratio: 3 / 4;
+    object-fit: cover;
+    background: var(--paper-2);
+  }
+  /* class 的 display 会盖过 UA [hidden]{display:none} → 有图时灰字母条仍叠在图下 */
+  .salon-img[hidden],
+  .salon-fallback[hidden] {
+    display: none;
+  }
+  .salon-img {
+    transition: opacity 0.85s ease;
+  }
+  .salon-frame.is-fading .salon-img {
+    opacity: 0.25;
+  }
+  .salon-fallback {
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: var(--gutter);
-    margin-top: calc(var(--u) * 6);
+    place-items: center;
+    font-family: var(--font-latin);
+    font-size: 2.2rem;
+    color: color-mix(in srgb, var(--accent) 70%, var(--ink));
+    background: color-mix(in srgb, var(--accent) 16%, var(--paper-2));
+    opacity: 0.9;
   }
-  @media (max-width: 767px) {
-    .home-cols {
-      grid-template-columns: 1fr;
+  /* 有 src 的图在场时再藏一次 fallback（轮播切空图时靠 [hidden]） */
+  .salon-mat:has(.salon-img[src]:not([src=''])) .salon-fallback {
+    display: none;
+  }
+  /* tombstone：悬停 / 主位常显极短中文名；负 bottom 由 hang padding-bottom 吞掉 */
+  .salon-tombstone {
+    position: absolute;
+    left: 50%;
+    bottom: -1.35em;
+    transform: translateX(-50%);
+    white-space: nowrap;
+    font-family: var(--font-serif);
+    font-weight: 400;
+    font-size: var(--fs-tiny);
+    color: var(--ink-2);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--dur) ease;
+  }
+  .salon-frame--main .salon-tombstone,
+  .salon-frame:hover .salon-tombstone,
+  .salon-frame:focus-visible .salon-tombstone {
+    opacity: 1;
+  }
+  .salon-frame:focus-visible {
+    outline: 2px solid var(--ink-2);
+    outline-offset: 4px;
+  }
+  .salon-frame:hover {
+    z-index: 5;
+  }
+  @media (max-width: 480px) {
+    .salon-hang {
+      min-height: 250px;
+      width: 100%;
+    }
+    .salon-frame--main {
+      width: 44%;
+      left: 4%;
+    }
+    .salon-frame--wing {
+      width: 32%;
+      left: 48%;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .salon-img {
+      transition: none;
+    }
+    .salon-tombstone {
+      opacity: 1;
     }
   }
   .home-multi {
     margin-top: calc(var(--u) * 8);
     padding-top: calc(var(--u) * 4);
-    border-top: 1px solid var(--rule);
-  }
-  .mtl-lede {
-    margin: 0 0 calc(var(--u) * 2);
-    max-width: 40rem;
   }
 </style>

@@ -32,10 +32,6 @@ body {
   background: color-mix(in srgb, var(--p-own) 22%, transparent);
 }
 
-h1,
-h2,
-h3,
-h4,
 .ui,
 nav,
 button,
@@ -51,6 +47,7 @@ h1,
 h2,
 h3,
 h4 {
+  font-family: var(--font-serif);
   font-weight: 500;
   line-height: 1.4;
   margin: calc(var(--u) * 6) 0 calc(var(--u) * 2);
@@ -127,13 +124,14 @@ em {
   text-emphasis: none;
 }
 
-/* 西文、原文、书名 */
+/* 西文、原文、书名：拉丁略放大，避免中英视觉忽大忽小；不对中文加 letter-spacing */
 .latin,
 :lang(de),
 :lang(en),
 :lang(fr),
 :lang(la) {
   font-family: var(--font-latin);
+  font-size: 1.05em;
 }
 cite.orig,
 .title-orig {

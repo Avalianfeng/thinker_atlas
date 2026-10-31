@@ -122,3 +122,11 @@ export function multiYearSpan(lanes: TimelineLane[], pad = 2): { from: number; t
 export function formatEventWhen(e: { date: string; to?: string }) {
   return e.to ? `${e.date}—${e.to}` : e.date;
 }
+
+/** 圆点旁常显短标题：按码点截断，过长加省略号。 */
+export function shortTitle(title: string, max = 6): string {
+  const chars = [...String(title ?? '').trim()];
+  if (chars.length <= max) return chars.join('');
+  if (max <= 1) return '…';
+  return chars.slice(0, max - 1).join('') + '…';
+}

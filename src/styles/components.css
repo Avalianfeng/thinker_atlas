@@ -436,8 +436,8 @@ a.prop:hover {
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: var(--paper);
-  border: 1px solid var(--ink-2);
+  background: var(--ink);
+  border: 1px solid var(--ink);
 }
 .timeline-v li.k-publish::before,
 .timeline-v li.k-出版::before {
@@ -445,6 +445,7 @@ a.prop:hover {
   border-color: var(--accent, var(--ink-2));
 }
 .timeline-v li.k-write::before {
+  background: var(--paper);
   border-color: var(--accent, var(--ink-2));
 }
 .timeline-v li.k-meet::before {
@@ -457,6 +458,7 @@ a.prop:hover {
 }
 .timeline-v li.k-context::before,
 .timeline-v li.k-历史背景::before {
+  background: var(--paper);
   border-color: var(--rule);
 }
 .timeline-v .when {
@@ -1013,11 +1015,18 @@ html[data-wall-view='cards'] .placard .zh {
   font-family: var(--font-sans);
   overflow: visible;
 }
-.graph .axis,
-.mtl .axis {
+.graph .axis {
   stroke: var(--rule);
 }
-.graph text,
+.mtl .axis {
+  stroke: var(--rule);
+  stroke-width: 1;
+  opacity: 0.4;
+}
+.graph text {
+  fill: var(--ink-2);
+  font-size: 12px;
+}
 .mtl text {
   fill: var(--ink-2);
   font-size: 12px;
@@ -1120,22 +1129,44 @@ html[data-wall-view='cards'] .placard .zh {
 }
 .mtl .tick {
   stroke: var(--rule);
+  opacity: 0.4;
+}
+.mtl .tick-label {
+  fill: var(--ink-2);
+  font-size: 11px;
+  opacity: 0.55;
 }
 .mtl .ev {
-  fill: var(--ink-2);
-  stroke: var(--paper);
-  stroke-width: 1;
-  cursor: default;
+  fill: var(--ink);
+  stroke: none;
+  cursor: pointer;
+}
+.mtl .ev.k-life {
+  fill: var(--ink);
+  stroke: none;
 }
 .mtl .ev.k-publish {
   fill: var(--accent, var(--ink));
+  stroke: none;
+}
+.mtl .ev.k-write {
+  fill: var(--paper);
+  stroke: var(--accent, var(--ink));
+  stroke-width: 1.5;
+}
+.mtl .ev.k-meet {
+  fill: var(--ink-2);
+  stroke: none;
 }
 .mtl .ev.k-context {
   fill: var(--paper);
   stroke: var(--rule);
+  stroke-width: 1.25;
 }
 .mtl .ev-label {
-  font-size: 10.5px;
+  fill: var(--ink-2);
+  font-size: 10px;
+  pointer-events: none;
 }
 
 .mtl-block {
@@ -1157,7 +1188,7 @@ html[data-wall-view='cards'] .placard .zh {
   justify-content: flex-start;
 }
 .mtl-names li {
-  height: 56px;
+  height: 72px;
   display: flex;
   align-items: center;
   gap: 0.5em;
@@ -1210,7 +1241,7 @@ html[data-wall-view='cards'] .placard .zh {
   padding: 6px 10px;
   max-width: min(22rem, 80vw);
   box-shadow: 0 2px 8px color-mix(in srgb, var(--ink) 8%, transparent);
-  white-space: nowrap;
+  white-space: normal;
 }
 .mtl-empty {
   margin: var(--u) 0;

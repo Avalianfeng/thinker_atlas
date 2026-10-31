@@ -1,7 +1,7 @@
 ---
 name: 内容格式规范
 description: Thinker's Atlas 的 Markdown + YAML 内容格式（v2）。一人一夹，标准 CommonMark/GFM，无 MDX、无自定义组件。
-version: 2.1
+version: 2.1.1
 updated: 2026-10-31
 independence: docs/independence.md
 ---
@@ -101,7 +101,8 @@ events:
 
 - **个人** `/people/<id>/`：纵向列表（细竖轴），按 date 排序；区间显示为「起—止」。
 - **多人** 主页底部：横轴=时间，每行一人（左名、右线+圆点）；只消费 `multi: true`。
-- **交互**：悬停圆点显示 date + title（可含人名）；可横向拖/滑平移。**点击圆点不跳转**。
+- **交互**：圆点旁（或正下）常显短标题（过长省略）；悬停或点击开 tip（全文 date + title，可含人名）；再点空白或 Esc 关闭；可横向拖/滑。**点击圆点不跳转**。
+- **kind 点样式**：life 实心墨、publish accent 实心、write 空心 accent、meet 次墨、context 描边纸色；轴/刻度淡线。
 - **不要**人与人关系辅助线。无人 `multi` 时隐藏该区块（或极简提示）。
 
 ## 6. 站点读侧
@@ -118,6 +119,7 @@ events:
 
 ## 变更记录
 
+- v2.1.1（2026-10-31）：多人线可读性——常显短标题、悬停/点击 tip、kind 点样式。
 - v2.1（2026-10-31）：增补 `timeline.yml`；个人纵轴 + 主页多人横轴；无 links/关系边。
 - v2（2026-10-31）：`people/<id>/` 扁平；废 MDX 与 thought/works/relations；真源仍为 git content/。
 - v1.1 / v1：见 `archive/docs/content-format-v1.md`。

@@ -4,7 +4,7 @@ import Placard from '@components/Placard.astro';
 import GraphMap from '@components/GraphMap.astro';
 import { getAtlas, entityForFile, thinkerUrl } from '@lib/atlas';
 import { recentCommits, formatDay } from '@lib/git';
-import { provenanceStats, addStats, emptyStats } from '@lib/provenance';
+import { addStats, emptyStats } from '@lib/provenance';
 
 const atlas = await getAtlas();
 const joinOrder = atlas.thinkers;

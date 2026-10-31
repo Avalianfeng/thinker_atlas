@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto';
 import { readFile, writeFile, mkdir, readdir, rm } from 'node:fs/promises';
 import path from 'node:path';
-import { atlasRefsOf, parseFrontmatter, titleOf, bodyOf } from './notes.mjs';
+import { atlasRefsOf, titleOf, bodyOf } from './notes.mjs';
 
 export const JOURNAL_DIR = 'atlas';
 export const INDEX_DIR = 'atlas/_index';
@@ -70,7 +70,7 @@ const sortKeys = (o) =>
  * 规则（见方案 §8）：记录上次同步时的哈希；只有一边变了就同步；两边都变则判冲突，
  * 不覆盖，把对方版本写成 xxx.conflict.md 并提示手动合并。删除不自动同步，只提示。
  */
-export async function syncJournal({ adapter, contentDir, state, dryRun = false, log = console.log }) {
+export async function syncJournal({ adapter, contentDir, state, dryRun = false }) {
   const statePath = path.join(contentDir, '..', 'sync', 'state.json');
   const journalDir = path.join(contentDir, 'journal');
   await mkdir(journalDir, { recursive: true });
@@ -193,7 +193,6 @@ export async function syncReferences({ adapter, contentDir, siteUrl = '', dryRun
     const ids = atlasRefsOf(note);
     if (!ids.length) continue;
     refs.push({ page: note.page, ids });
-    const fm = parseFrontmatter(note.content);
     const target = path.join(cacheDir, note.page.replace(/\.md$/, '.md'));
     const front = [
       '---',

@@ -19,9 +19,9 @@ const group = <T,>(
   label: (x: T) => string,
   href: (x: T) => string,
   kind: string,
-  sub?: (x: T) => string,
+  sub?: (x: T) => string | undefined,
 ) => {
-  const map = new Map<string, { label: string; href: string; kind: string; sub?: string }[]>();
+  const map = new Map<string, { label: string; href: string; kind: string; sub?: string | undefined }[]>();
   for (const it of items) {
     const k = key(it);
     if (!map.has(k)) map.set(k, []);

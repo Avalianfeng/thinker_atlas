@@ -1,6 +1,6 @@
 import type { APIRoute } from 'astro';
 import { getAtlas, parseId } from '@lib/atlas';
-import { toJson, conceptShape, relationShape, timelineShape, graphShape, journalShape, workShape } from '@lib/api';
+import { toJson, conceptShape, relationShape, timelineShape, graphShape, journalShape } from '@lib/api';
 import { provenanceStats } from '@lib/provenance';
 
 /**

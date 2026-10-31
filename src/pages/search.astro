@@ -13,13 +13,14 @@ import Base from '@layouts/Base.astro';
 </Base>
 
 <script>
+  const PAGEFIND_PATH = '/pagefind/pagefind.js';
   const input = document.getElementById('search-input') as HTMLInputElement | null;
   const results = document.getElementById('search-results') as HTMLElement | null;
   let pagefind: any = null;
   (async () => {
     if (!input) return;
     try {
-      pagefind = await import(/* @vite-ignore */ '/pagefind/pagefind.js');
+      pagefind = await import(/* @vite-ignore */ PAGEFIND_PATH);
       await pagefind.options({ excerptLength: 60 });
       await pagefind.init();
       input.focus();

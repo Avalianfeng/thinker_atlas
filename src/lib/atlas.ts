@@ -138,10 +138,9 @@ async function build(): Promise<Atlas> {
     for (const r of n.data.atlas) if (!entities.has(r)) console.warn(`[atlas] SilverBullet 笔记 ${n.data.page} 的 atlas: ${r} 未找到对应条目`);
   if (errors.length) throw new Error(`内容校验失败：\n  - ${errors.join('\n  - ')}`);
 
-  const byThinker = <T extends { data: { thinker: string } }>(xs: T[]) => new Map(xs.map((x) => [x.data.thinker, x]));
-  const lifeMap = byThinker(life);
-  const afterMap = byThinker(afterlife);
-  const pathMap = byThinker(paths);
+  const lifeMap: Map<string, Life> = new Map(life.map((x) => [x.data.thinker, x]));
+  const afterMap: Map<string, Afterlife> = new Map(afterlife.map((x) => [x.data.thinker, x]));
+  const pathMap: Map<string, PathEntry> = new Map(paths.map((x) => [x.data.thinker, x]));
 
   const ownerOf = (id: string) => `atlas:${parseId(id).thinker}`;
   const touches = (target: string, id: string) => target === id || target.startsWith(id + '/');

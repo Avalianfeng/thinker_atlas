@@ -9,7 +9,6 @@ function fakeServer(initial = {}) {
     const method = init.method || 'GET';
     const path = decodeURIComponent(new URL(url).pathname.replace(/^\/\.fs\/?/, ''));
     calls.push({ method, path });
-    const auth = init.headers?.Authorization;
 
     if (method === 'PUT') {
       files.set(path, init.body);

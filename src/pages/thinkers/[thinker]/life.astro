@@ -3,7 +3,6 @@ import Mdx from '@components/Mdx.astro';
 import Hall from '@layouts/Hall.astro';
 import TimelineV from '@components/TimelineV.astro';
 import { getAtlas, lifespan } from '@lib/atlas';
-import { render } from 'astro:content';
 
 export async function getStaticPaths() {
   const atlas = await getAtlas();

@@ -15,9 +15,12 @@
     "pinyin-pro": "^3.29.5"
   },
   "devDependencies": {
+    "@astrojs/check": "^0.9.12",
+    "@types/node": "^26.6.6",
     "pagefind": "^1.5.2",
     "playwright-core": "^1.64.1",
     "subset-font": "^2.9.0",
+    "typescript": "^6.0.3",
     "vitest": "^5.0.5"
   },
   "scripts": {

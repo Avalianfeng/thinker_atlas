@@ -1,7 +1,7 @@
 ---
 import Portrait from './Portrait.astro';
 import Maturity from './Maturity.astro';
-import { lifespan, yearOf, thinkerUrl } from '../lib/atlas';
+import { lifespan, thinkerUrl } from '../lib/atlas';
 interface Props {
   thinker: any;
   index: number;
@@ -9,8 +9,6 @@ interface Props {
 }
 const { thinker, index, mini = false } = Astro.props;
 const t = thinker.data;
-const born = yearOf(t.born.date)!;
-const died = yearOf(t.died?.date);
 const years = lifespan(thinker);
 ---
 <a class:list={['placard', { mini }]} href={thinkerUrl(thinker.id)} style={`--accent:${t.accent};--o-join:${index};--o-year:${t.born.date}`}>

@@ -1,6 +1,5 @@
 ---
 import Hall from '@layouts/Hall.astro';
-import Maturity from '@components/Maturity.astro';
 import { getAtlas, conceptUrl, thinkerUrl } from '@lib/atlas';
 
 export async function getStaticPaths() {
@@ -16,7 +15,6 @@ const concepts = atlas.conceptsOf(thinker.id);
 const periods = thinker.data.periods;
 const groups = periods.map((p) => ({ ...p, items: concepts.filter((c) => c.data.period === p.id) }));
 const unperioded = concepts.filter((c) => !c.data.period);
-const stats = atlas.statsOf(thinker.id);
 ---
 <Hall atlas={atlas} thinker={thinker} title="思想">
   <h1>思想</h1>

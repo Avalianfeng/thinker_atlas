@@ -1,9 +1,7 @@
 ---
 import Mdx from '@components/Mdx.astro';
 import Hall from '@layouts/Hall.astro';
-import Maturity from '@components/Maturity.astro';
 import { getAtlas, normalizeRef } from '@lib/atlas';
-import { render } from 'astro:content';
 
 export async function getStaticPaths() {
   const atlas = await getAtlas();

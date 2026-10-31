@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // 构建后自检：确认接口文件存在、JSON 可解析、ID 稳定、public 子集不含 private。
-import { readFile, readdir, stat } from 'node:fs/promises';
+import { readFile, readdir } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 

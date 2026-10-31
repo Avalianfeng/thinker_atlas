@@ -1,0 +1,5 @@
+/* 自托管 Noto：字重仅 400/500；unicode-range 分包由 @fontsource 提供。 */
+@import '@fontsource/noto-serif-sc/400.css';
+@import '@fontsource/noto-serif-sc/500.css';
+@import '@fontsource/noto-sans-sc/400.css';
+@import '@fontsource/noto-sans-sc/500.css';

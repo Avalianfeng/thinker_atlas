@@ -16,10 +16,17 @@
   flex-wrap: wrap;
 }
 .site-title {
+  font-family: var(--font-serif);
   font-weight: 500;
   text-decoration: none;
   letter-spacing: 0.04em;
   margin-right: auto;
+}
+.site-title .latin {
+  font-weight: 400;
+  color: var(--ink-2);
+  margin-left: 0.4em;
+  font-size: 15px;
 }
 .theme-toggle {
   font: inherit;
@@ -95,7 +102,7 @@
 }
 
 .section-title {
-  font-family: var(--font-sans);
+  font-family: var(--font-serif);
   font-size: var(--fs-small);
   font-weight: 500;
   letter-spacing: 0.12em;
@@ -204,5 +211,8 @@
     padding: var(--u) calc(var(--u) * 2.5);
     gap: calc(var(--u) * 1.5);
     flex-wrap: nowrap;
+  }
+  .site-title .latin {
+    display: none;
   }
 }

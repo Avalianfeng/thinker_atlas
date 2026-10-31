@@ -32,10 +32,6 @@ body {
   background: color-mix(in srgb, var(--p-own) 22%, transparent);
 }
 
-h1,
-h2,
-h3,
-h4,
 .ui,
 nav,
 button,
@@ -51,6 +47,7 @@ h1,
 h2,
 h3,
 h4 {
+  font-family: var(--font-serif);
   font-weight: 500;
   line-height: 1.4;
   margin: calc(var(--u) * 6) 0 calc(var(--u) * 2);

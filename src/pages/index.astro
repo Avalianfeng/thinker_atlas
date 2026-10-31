@@ -1,7 +1,6 @@
 ---
 import Base from '@layouts/Base.astro';
 import Placard from '@components/Placard.astro';
-import Portrait from '@components/Portrait.astro';
 import MultiTimeline from '@components/MultiTimeline.astro';
 import { getAtlas, personUrl } from '@lib/atlas';
 import { loadMultiLanes } from '@lib/timeline-yml';
@@ -36,7 +35,7 @@ const multiLanes = loadMultiLanes(
   })),
 );
 
-/** 首页肖像墙：按出生年，带解析后的 src */
+/** 首页沙龙挂墙：按出生年，带解析后的 src */
 const wallTiles = byBorn.map((p) => {
   const slug = personSlug(p.id);
   const t = p.data;
@@ -45,8 +44,9 @@ const wallTiles = byBorn.map((p) => {
     name: t.name as string,
     nameEn: (t.name_en as string) || '',
     url: personUrl(p.id),
-    src: resolvePortrait(slug, t.portrait as string | undefined),
+    src: resolvePortrait(slug, t.portrait as string | undefined) || '',
     accent: accentById.get(p.id)!,
+    initial: ((t.name_en as string) || (t.name as string)).trim().charAt(0),
   };
 });
 ---
@@ -59,33 +59,79 @@ const wallTiles = byBorn.map((p) => {
   </script>
   <div class="page">
     <section class="wall-hero" aria-label="肖像墙">
-      <div class="portrait-wall" data-hero-wall>
-        <ul class="portrait-wall-grid">
-          {wallTiles.map((tile, i) => (
-            <li>
-              <a
-                class:list={['portrait-wall-tile', { 'is-active': i === 0 }]}
-                href={tile.url}
-                style={`--accent:${tile.accent}`}
-                data-tile={i}
-                aria-label={tile.name}
-              >
-                <Portrait
-                  class="portrait"
-                  name={tile.name}
-                  original={tile.nameEn || tile.name}
-                  accent={tile.accent}
-                  src={tile.src}
-                  showYears={false}
-                />
-                <span class="portrait-wall-cap">
-                  <span class="zh">{tile.name}</span>
-                  {tile.nameEn && <span class="latin orig">{tile.nameEn}</span>}
-                </span>
-              </a>
-            </li>
-          ))}
-        </ul>
+      {/*
+        沙龙挂墙：槽位固定（主大 + 侧翼小重叠），JS 只轮换主位内容。
+        人物数据挂在 data-hero-wall 上供轮播读取。
+      */}
+      <div
+        class="salon-hang"
+        data-hero-wall
+        data-tiles={JSON.stringify(
+          wallTiles.map((t) => ({
+            name: t.name,
+            url: t.url,
+            src: t.src,
+            accent: t.accent,
+            initial: t.initial,
+          })),
+        )}
+      >
+        {wallTiles.length > 0 && (
+          <a
+            class="salon-frame salon-frame--main is-active"
+            href={wallTiles[0].url}
+            style={`--accent:${wallTiles[0].accent}`}
+            data-slot="main"
+            aria-label={wallTiles[0].name}
+          >
+            <span class="salon-mat">
+              {wallTiles[0].src ? (
+                <img class="salon-img" src={wallTiles[0].src} alt="" width="360" height="480" loading="eager" />
+              ) : (
+                <span class="salon-fallback" aria-hidden="true">{wallTiles[0].initial}</span>
+              )}
+            </span>
+            <span class="salon-tombstone">{wallTiles[0].name}</span>
+          </a>
+        )}
+        {wallTiles.length > 1 && (
+          <a
+            class="salon-frame salon-frame--wing"
+            href={wallTiles[1].url}
+            style={`--accent:${wallTiles[1].accent}`}
+            data-slot="wing"
+            data-wing="0"
+            aria-label={wallTiles[1].name}
+          >
+            <span class="salon-mat">
+              {wallTiles[1].src ? (
+                <img class="salon-img" src={wallTiles[1].src} alt="" width="360" height="480" loading="lazy" />
+              ) : (
+                <span class="salon-fallback" aria-hidden="true">{wallTiles[1].initial}</span>
+              )}
+            </span>
+            <span class="salon-tombstone">{wallTiles[1].name}</span>
+          </a>
+        )}
+        {wallTiles.length > 2 && (
+          <a
+            class="salon-frame salon-frame--wing salon-frame--wing-2"
+            href={wallTiles[2].url}
+            style={`--accent:${wallTiles[2].accent}`}
+            data-slot="wing"
+            data-wing="1"
+            aria-label={wallTiles[2].name}
+          >
+            <span class="salon-mat">
+              {wallTiles[2].src ? (
+                <img class="salon-img" src={wallTiles[2].src} alt="" width="360" height="480" loading="lazy" />
+              ) : (
+                <span class="salon-fallback" aria-hidden="true">{wallTiles[2].initial}</span>
+              )}
+            </span>
+            <span class="salon-tombstone">{wallTiles[2].name}</span>
+          </a>
+        )}
       </div>
     </section>
 
@@ -122,82 +168,132 @@ const wallTiles = byBorn.map((p) => {
 </Base>
 
 <style>
+  /* 展馆 lobby：重叠拼贴 / 沙龙挂墙（非第二排卡片） */
   .wall-hero {
-    padding: calc(var(--u) * 2) 0 calc(var(--u) * 4);
+    padding: calc(var(--u) * 3) 0 calc(var(--u) * 5);
     border-bottom: 1px solid var(--rule);
     margin-bottom: calc(var(--u) * 4);
   }
-  .portrait-wall-grid {
-    list-style: none;
+  .salon-hang {
+    position: relative;
+    width: min(100%, 520px);
+    height: clamp(300px, 48vw, 380px);
     margin: 0;
-    padding: 0;
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-    gap: calc(var(--u) * 2);
   }
-  .portrait-wall-tile {
+  .salon-frame {
     --accent: var(--ink-2);
-    display: flex;
-    flex-direction: column;
+    position: absolute;
+    display: block;
     text-decoration: none;
     color: inherit;
-    border-top: 3px solid transparent;
-    opacity: 0.62;
-    transition:
-      opacity 1.2s ease,
-      border-color 1.2s ease,
-      background var(--dur) ease;
+    z-index: 1;
   }
-  .portrait-wall-tile.is-active {
-    opacity: 1;
-    border-top-color: var(--accent);
+  /* 主框：大、略前、微倾 */
+  .salon-frame--main {
+    width: min(52%, 240px);
+    left: 6%;
+    top: 4%;
+    z-index: 3;
+    transform: rotate(-1.5deg);
   }
-  .portrait-wall-tile:hover,
-  .portrait-wall-tile:focus-visible {
-    opacity: 1;
-    background: var(--paper-2);
+  /* 侧翼：略小、重叠、2–4° 倾 */
+  .salon-frame--wing {
+    width: min(38%, 168px);
+    left: 42%;
+    top: 16%;
+    z-index: 2;
+    transform: rotate(3.2deg);
   }
-  .portrait-wall-tile:focus-visible {
-    outline: 2px solid var(--ink-2);
-    outline-offset: 2px;
+  .salon-frame--wing-2 {
+    left: 58%;
+    top: 6%;
+    width: min(34%, 148px);
+    transform: rotate(-2.8deg);
+    z-index: 1;
   }
-  .portrait-wall-tile :global(.portrait),
-  .portrait-wall-tile :global(.portrait-img),
-  .portrait-wall-tile :global(.portrait-svg) {
+  .salon-mat {
+    display: block;
+    background: var(--paper);
+    border: 1px solid var(--rule);
+    padding: 7px 7px 18px;
+    box-shadow:
+      0 1px 0 rgba(31, 29, 26, 0.04),
+      0 8px 22px rgba(31, 29, 26, 0.1);
+  }
+  [data-theme='dark'] .salon-mat {
+    box-shadow:
+      0 1px 0 rgba(0, 0, 0, 0.2),
+      0 8px 22px rgba(0, 0, 0, 0.35);
+  }
+  .salon-img,
+  .salon-fallback {
     display: block;
     width: 100%;
-    height: auto;
     aspect-ratio: 3 / 4;
     object-fit: cover;
+    background: var(--paper-2);
   }
-  .portrait-wall-cap {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-    padding: calc(var(--u) * 1.25) calc(var(--u) * 0.5) calc(var(--u) * 0.5);
+  .salon-img {
+    transition: opacity 0.85s ease;
   }
-  .portrait-wall-cap .zh {
-    font-family: var(--font-serif);
-    font-weight: 500;
-    font-size: var(--fs-h4);
-    line-height: 1.35;
+  .salon-frame.is-fading .salon-img {
+    opacity: 0.25;
   }
-  .portrait-wall-cap .orig {
+  .salon-fallback {
+    display: grid;
+    place-items: center;
     font-family: var(--font-latin);
-    font-size: var(--fs-small);
+    font-size: 3rem;
     color: var(--ink-2);
-    line-height: 1.35;
+    opacity: 0.7;
   }
-  @media (min-width: 640px) {
-    .portrait-wall-grid {
-      grid-template-columns: repeat(auto-fit, minmax(200px, 280px));
-      justify-content: start;
+  /* tombstone：悬停 / 主位常显极短中文名 */
+  .salon-tombstone {
+    position: absolute;
+    left: 50%;
+    bottom: -1.35em;
+    transform: translateX(-50%);
+    white-space: nowrap;
+    font-family: var(--font-serif);
+    font-weight: 400;
+    font-size: var(--fs-tiny);
+    color: var(--ink-2);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--dur) ease;
+  }
+  .salon-frame--main .salon-tombstone,
+  .salon-frame:hover .salon-tombstone,
+  .salon-frame:focus-visible .salon-tombstone {
+    opacity: 1;
+  }
+  .salon-frame:focus-visible {
+    outline: 2px solid var(--ink-2);
+    outline-offset: 4px;
+  }
+  .salon-frame:hover {
+    z-index: 5;
+  }
+  @media (max-width: 480px) {
+    .salon-hang {
+      height: 280px;
+      width: 100%;
+    }
+    .salon-frame--main {
+      width: 48%;
+      left: 4%;
+    }
+    .salon-frame--wing {
+      width: 36%;
+      left: 46%;
     }
   }
   @media (prefers-reduced-motion: reduce) {
-    .portrait-wall-tile {
-      opacity: 1;
+    .salon-img {
       transition: none;
+    }
+    .salon-tombstone {
+      opacity: 1;
     }
   }
   .home-multi {

@@ -10,4 +10,4 @@ portrait: ./portrait.jpg
 visibility: private
 ---
 
-维特根斯坦是本展馆的样例人物卡。正文按同目录下的编号 Markdown 展开；图片用相对路径引用。
+肖像来源：Wikimedia Commons `File:Ludwig Wittgenstein 1929.jpg`（Moritz Nähr，约 1928–29，Public domain）。

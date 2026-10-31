@@ -1,4 +1,4 @@
-// 前端交互：亮暗主题 + 展厅墙视图 + 首页肖像墙轻量轮播。状态存 localStorage。
+// 前端交互：亮暗主题 + 展厅墙视图 + 首页沙龙挂墙轻量轮播。状态存 localStorage。
 const root = document.documentElement;
 
 function initTheme() {
@@ -47,40 +47,95 @@ function initWallView() {
   });
 }
 
-/** 首页肖像墙：同批肖像轻量自动轮播（淡入强调当前格）；尊重 reduced-motion。 */
+type SalonTile = {
+  name: string;
+  url: string;
+  src: string;
+  accent: string;
+  initial: string;
+};
+
+function fillFrame(frame: HTMLElement, tile: SalonTile) {
+  frame.setAttribute('href', tile.url);
+  frame.setAttribute('aria-label', tile.name);
+  frame.style.setProperty('--accent', tile.accent);
+  const tomb = frame.querySelector('.salon-tombstone');
+  if (tomb) tomb.textContent = tile.name;
+  const img = frame.querySelector<HTMLImageElement>('.salon-img');
+  const fallback = frame.querySelector<HTMLElement>('.salon-fallback');
+  if (tile.src) {
+    if (img) {
+      img.src = tile.src;
+      img.hidden = false;
+    }
+    if (fallback) fallback.hidden = true;
+  } else if (fallback) {
+    fallback.textContent = tile.initial;
+    fallback.hidden = false;
+    if (img) img.hidden = true;
+  }
+}
+
+/**
+ * 沙龙挂墙：槽位固定；主位肖像淡入轮换，侧翼显示其余人。
+ * prefers-reduced-motion 关轮播。
+ */
 function initHeroWall() {
   const wall = document.querySelector<HTMLElement>('[data-hero-wall]');
   if (!wall) return;
-  const tiles = [...wall.querySelectorAll<HTMLElement>('.portrait-wall-tile')];
-  if (tiles.length < 2) {
-    tiles[0]?.classList.add('is-active');
+
+  let tiles: SalonTile[] = [];
+  try {
+    tiles = JSON.parse(wall.dataset.tiles || '[]') as SalonTile[];
+  } catch {
     return;
   }
+  if (tiles.length === 0) return;
+
+  const main = wall.querySelector<HTMLElement>('[data-slot="main"]');
+  const wings = [...wall.querySelectorAll<HTMLElement>('[data-slot="wing"]')];
+  if (!main) return;
 
   const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  if (reduce) {
-    for (const t of tiles) t.classList.add('is-active');
-    return;
-  }
+  if (tiles.length < 2 || reduce) return;
 
-  let i = tiles.findIndex((t) => t.classList.contains('is-active'));
-  if (i < 0) i = 0;
+  let mainIdx = 0;
 
-  const show = (next: number) => {
-    tiles.forEach((t, idx) => t.classList.toggle('is-active', idx === next));
-    i = next;
+  const paint = (idx: number, animate: boolean) => {
+    const n = tiles.length;
+    const order = Array.from({ length: n }, (_, k) => tiles[(idx + k) % n]!);
+    if (animate) {
+      main.classList.add('is-fading');
+      window.setTimeout(() => {
+        fillFrame(main, order[0]!);
+        main.classList.remove('is-fading');
+      }, 280);
+    } else {
+      fillFrame(main, order[0]!);
+    }
+    wings.forEach((w, i) => {
+      const tile = order[i + 1];
+      if (tile) {
+        w.hidden = false;
+        fillFrame(w, tile);
+      } else {
+        w.hidden = true;
+      }
+    });
+    mainIdx = idx;
   };
-  show(i);
 
-  const INTERVAL_MS = 5200;
-  let timer = window.setInterval(() => show((i + 1) % tiles.length), INTERVAL_MS);
+  paint(0, false);
+
+  const INTERVAL_MS = 5600;
+  let timer = window.setInterval(() => paint((mainIdx + 1) % tiles.length, true), INTERVAL_MS);
 
   const pause = () => {
     window.clearInterval(timer);
   };
   const resume = () => {
     window.clearInterval(timer);
-    timer = window.setInterval(() => show((i + 1) % tiles.length), INTERVAL_MS);
+    timer = window.setInterval(() => paint((mainIdx + 1) % tiles.length, true), INTERVAL_MS);
   };
 
   wall.addEventListener('mouseenter', pause);
@@ -89,10 +144,6 @@ function initHeroWall() {
   wall.addEventListener('focusout', (e) => {
     if (!wall.contains(e.relatedTarget as Node | null)) resume();
   });
-
-  for (const [idx, tile] of tiles.entries()) {
-    tile.addEventListener('pointerenter', () => show(idx));
-  }
 }
 
 function init() {

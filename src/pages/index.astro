@@ -185,15 +185,18 @@ const wallTiles = byBorn.map((p) => {
 <style>
   /* 展馆 lobby：重叠拼贴 / 沙龙挂墙（非第二排卡片） */
   .wall-hero {
-    padding: calc(var(--u) * 3) 0 calc(var(--u) * 5);
+    /* 底距留出 hang 内 tombstone 探出量，避免压到下方 view-switch */
+    padding: calc(var(--u) * 3) 0 calc(var(--u) * 7);
     border-bottom: 1px solid var(--rule);
     margin-bottom: calc(var(--u) * 4);
   }
   .salon-hang {
     position: relative;
     width: min(100%, 380px);
-    height: clamp(210px, 34vw, 260px);
+    /* 绝对定位框不撑高：用够用的 min-height + 底 padding 容纳 tombstone，勿用矮 height 裁切 */
+    min-height: clamp(280px, 44vw, 340px);
     margin: 0;
+    padding-bottom: 1.6em;
   }
   .salon-frame {
     --accent: var(--ink-2);
@@ -248,6 +251,11 @@ const wallTiles = byBorn.map((p) => {
     object-fit: cover;
     background: var(--paper-2);
   }
+  /* class 的 display 会盖过 UA [hidden]{display:none} → 有图时灰字母条仍叠在图下 */
+  .salon-img[hidden],
+  .salon-fallback[hidden] {
+    display: none;
+  }
   .salon-img {
     transition: opacity 0.85s ease;
   }
@@ -263,7 +271,11 @@ const wallTiles = byBorn.map((p) => {
     background: color-mix(in srgb, var(--accent) 16%, var(--paper-2));
     opacity: 0.9;
   }
-  /* tombstone：悬停 / 主位常显极短中文名 */
+  /* 有 src 的图在场时再藏一次 fallback（轮播切空图时靠 [hidden]） */
+  .salon-mat:has(.salon-img[src]:not([src=''])) .salon-fallback {
+    display: none;
+  }
+  /* tombstone：悬停 / 主位常显极短中文名；负 bottom 由 hang padding-bottom 吞掉 */
   .salon-tombstone {
     position: absolute;
     left: 50%;
@@ -292,7 +304,7 @@ const wallTiles = byBorn.map((p) => {
   }
   @media (max-width: 480px) {
     .salon-hang {
-      height: 200px;
+      min-height: 250px;
       width: 100%;
     }
     .salon-frame--main {

@@ -1,13 +1,13 @@
 ---
 /**
  * 主页底部多人横向时间线。
- * - 每行一人；横轴时间；悬停显示 date+title（+人名）
- * - 可横向拖/滑；点击圆点不跳转
- * - 无人 multi 事件时由调用方隐藏本组件
+ * - 每行一人；横轴时间；圆点旁常显短标题
+ * - 悬停或点击开 tip；点空白 / Esc 关；圆点不跳转
+ * - 可横向拖/滑
  */
 import { scale, tickYears } from '@lib/timeline';
 import { yearOf } from '@lib/ids';
-import { formatEventWhen, multiYearSpan, type TimelineLane } from '@lib/timeline-yml';
+import { formatEventWhen, multiYearSpan, shortTitle, type TimelineLane } from '@lib/timeline-yml';
 
 interface Props {
   lanes: TimelineLane[];
@@ -18,20 +18,29 @@ const empty = !span || lanes.length === 0;
 
 const PX_PER_YEAR = 14;
 const padL = 8;
-const padR = 24;
-const laneH = 56;
+const padR = 28;
+const laneH = 72;
 const top = 36;
 const bottom = 28;
+const labelDy = 16;
 const W = empty ? 400 : Math.max(640, Math.round((span!.to - span!.from) * PX_PER_YEAR) + padL + padR);
 const H = top + laneH * Math.max(lanes.length, 1) + bottom;
 const x = empty ? ((_y: number) => 0) : scale(span!.from, span!.to, padL, W - padR);
 const ticks = empty ? [] : tickYears(span!.from, span!.to, 10);
 
-type Pt = { cx: number; cy: number; when: string; title: string; person: string; kind: string };
+type Pt = {
+  cx: number;
+  cy: number;
+  when: string;
+  title: string;
+  short: string;
+  person: string;
+  kind: string;
+};
 const points: Pt[] = [];
 if (!empty) {
   lanes.forEach((lane, i) => {
-    const cy = top + i * laneH + laneH / 2;
+    const cy = top + i * laneH + laneH / 2 - 6;
     for (const e of lane.events) {
       const y = yearOf(e.date);
       if (y === undefined) continue;
@@ -40,6 +49,7 @@ if (!empty) {
         cy,
         when: formatEventWhen(e),
         title: e.title,
+        short: shortTitle(e.title, 6),
         person: lane.name,
         kind: e.kind,
       });
@@ -66,11 +76,11 @@ if (!empty) {
           {ticks.map((y) => (
             <g>
               <line class="tick" x1={x(y)} y1={H - bottom} x2={x(y)} y2={H - bottom + 8} />
-              <text x={x(y)} y={H - 4} text-anchor="middle">{y}</text>
+              <text class="tick-label" x={x(y)} y={H - 4} text-anchor="middle">{y}</text>
             </g>
           ))}
           {lanes.map((lane, i) => {
-            const cy = top + i * laneH + laneH / 2;
+            const cy = top + i * laneH + laneH / 2 - 6;
             const years = lane.events.map((e) => yearOf(e.date)!).filter((n) => Number.isFinite(n));
             const x0 = years.length ? x(Math.min(...years)) : padL;
             const x1 = years.length ? x(Math.max(...years)) : padL;
@@ -81,18 +91,23 @@ if (!empty) {
             );
           })}
           {points.map((p) => (
-            <circle
-              class={`ev k-${p.kind}`}
-              cx={p.cx}
-              cy={p.cy}
-              r="4"
-              data-when={p.when}
-              data-title={p.title}
-              data-person={p.person}
-              tabindex="0"
-              role="img"
-              aria-label={`${p.person} ${p.when} ${p.title}`}
-            />
+            <g class="ev-g" data-kind={p.kind}>
+              <circle
+                class={`ev k-${p.kind}`}
+                cx={p.cx}
+                cy={p.cy}
+                r="4.5"
+                data-when={p.when}
+                data-title={p.title}
+                data-person={p.person}
+                tabindex="0"
+                role="button"
+                aria-label={`${p.person} ${p.when} ${p.title}`}
+              />
+              <text class="ev-label" x={p.cx} y={p.cy + labelDy} text-anchor="middle">
+                {p.short}
+              </text>
+            </g>
           ))}
         </svg>
       </div>
@@ -110,6 +125,7 @@ if (!empty) {
     let dragging = false;
     let startX = 0;
     let startLeft = 0;
+    let pinned: SVGCircleElement | null = null;
 
     const onDown = (e: PointerEvent) => {
       if ((e.target as Element).closest('circle.ev')) return;
@@ -138,38 +154,75 @@ if (!empty) {
     scroll.addEventListener('pointerup', onUp);
     scroll.addEventListener('pointercancel', onUp);
 
-    const show = (el: SVGCircleElement, clientX: number, clientY: number) => {
+    const placeTip = (clientX: number, clientY: number) => {
+      const rect = root.getBoundingClientRect();
+      tip.style.left = `${Math.min(rect.width - 12, Math.max(12, clientX - rect.left))}px`;
+      tip.style.top = `${Math.max(8, clientY - rect.top - 12)}px`;
+    };
+
+    const show = (el: SVGCircleElement, clientX?: number, clientY?: number) => {
       const when = el.dataset.when ?? '';
       const title = el.dataset.title ?? '';
       const person = el.dataset.person ?? '';
       tip.hidden = false;
       tip.textContent = `${person} · ${when} · ${title}`;
-      const rect = root.getBoundingClientRect();
-      tip.style.left = `${Math.min(rect.width - 12, Math.max(12, clientX - rect.left))}px`;
-      tip.style.top = `${Math.max(8, clientY - rect.top - 12)}px`;
+      if (clientX != null && clientY != null) {
+        placeTip(clientX, clientY);
+      } else {
+        const r = el.getBoundingClientRect();
+        placeTip(r.left + r.width / 2, r.top);
+      }
     };
-    const hide = () => {
+
+    const hideIfUnpinned = () => {
+      if (pinned) {
+        show(pinned);
+        return;
+      }
+      tip.hidden = true;
+    };
+
+    const close = () => {
+      pinned = null;
       tip.hidden = true;
     };
 
     root.querySelectorAll<SVGCircleElement>('circle.ev').forEach((el) => {
       el.addEventListener('pointerenter', (e) => show(el, e.clientX, e.clientY));
-      el.addEventListener('pointermove', (e) => show(el, e.clientX, e.clientY));
-      el.addEventListener('pointerleave', hide);
-      el.addEventListener('focus', () => {
-        const r = el.getBoundingClientRect();
-        const br = root.getBoundingClientRect();
-        show(el, r.left + r.width / 2, r.top);
-        tip.style.left = `${r.left - br.left + r.width / 2}px`;
-        tip.style.top = `${Math.max(8, r.top - br.top - 12)}px`;
+      el.addEventListener('pointermove', (e) => {
+        if (!pinned || pinned === el) show(el, e.clientX, e.clientY);
       });
-      el.addEventListener('blur', hide);
-      // Aeris：点击圆点不进入人物页
+      el.addEventListener('pointerleave', hideIfUnpinned);
+      el.addEventListener('focus', () => show(el));
+      el.addEventListener('blur', () => {
+        if (pinned === el) return;
+        hideIfUnpinned();
+      });
+      // Aeris：点击圆点不进入人物页；悬停或点击都开 tip
       el.addEventListener('click', (e) => {
         e.preventDefault();
         e.stopPropagation();
+        pinned = el;
+        show(el, e.clientX, e.clientY);
+      });
+      el.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          pinned = el;
+          show(el);
+        }
       });
     });
+
+    root.addEventListener('click', (e) => {
+      if ((e.target as Element).closest('circle.ev')) return;
+      close();
+    });
+
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') close();
+    };
+    document.addEventListener('keydown', onKey);
   }
 
   document.querySelectorAll<HTMLElement>('[data-mtl]').forEach(bind);

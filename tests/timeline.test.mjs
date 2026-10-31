@@ -7,6 +7,7 @@ import {
   loadMultiLanes,
   multiYearSpan,
   formatEventWhen,
+  shortTitle,
 } from '../src/lib/timeline-yml';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -89,5 +90,13 @@ describe('样例内容与多人合并', () => {
     const yaml = `events:\n  - date: "1900"\n    title: 仅个人\n`;
     const events = parseTimelineYaml(yaml);
     expect(events.filter((e) => e.multi)).toHaveLength(0);
+  });
+});
+
+describe('shortTitle', () => {
+  it('短标题原样返回；过长按码点截断加省略号', () => {
+    expect(shortTitle('生于维也纳')).toBe('生于维也纳');
+    expect(shortTitle('《逻辑哲学论》出版')).toBe('《逻辑哲学…');
+    expect(shortTitle('赴剑桥，随罗素学习', 6)).toBe('赴剑桥，随…');
   });
 });

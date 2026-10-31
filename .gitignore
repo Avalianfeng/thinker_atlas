@@ -8,10 +8,6 @@ tmp/
 npm-debug.log*
 .DS_Store
 
-# 生成物：字体子集（npm run build / dev 前自动重新生成）
-public/fonts/
-src/styles/fonts.css
-
 # sync-portraits 生成（真源在 content/people/）
 public/people/
 public/portraits/*

@@ -305,7 +305,7 @@ a.prop:hover {
 .concept-card .def {
   grid-column: 1 / -1;
   border-right: 0;
-  font-family: var(--font-serif);
+  font-family: var(--font-sans);
   font-size: var(--fs-body);
   line-height: var(--lh-body);
 }
@@ -422,7 +422,7 @@ a.prop:hover {
 }
 .timeline-v li {
   display: grid;
-  grid-template-columns: 7.5em 1fr;
+  grid-template-columns: minmax(10.5em, max-content) 1fr;
   gap: calc(var(--u) * 2);
   padding: var(--u) 0 var(--u) calc(var(--u) * 2);
   margin: 0;
@@ -487,6 +487,8 @@ a.prop:hover {
   font-size: var(--fs-small);
   color: var(--ink-2);
   padding-top: 0.2em;
+  white-space: nowrap;
+  overflow: visible;
 }
 .timeline-v .kind {
   font-family: var(--font-sans);
@@ -498,6 +500,7 @@ a.prop:hover {
   white-space: nowrap;
 }
 .timeline-v .what {
+  font-family: var(--font-sans);
   line-height: 1.7;
 }
 .timeline-v .detail {

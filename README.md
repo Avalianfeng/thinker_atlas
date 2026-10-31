@@ -55,19 +55,26 @@ npm run new feyerabend
 
 ### 3. 构建与发布
 
+推送到 **`main`** 会由 GitHub Actions 自动：`npm test` → `npm run build` → `rsync` 到 VPS（见 [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml)）。也可在 Actions 里手动 `workflow_dispatch`。
+
+本地仍可用：
+
 ```bash
 npm run build     # 本地构建
 npm run deploy    # rsync dist/ 到 VPS（信息在 .env）
 npm run publish   # build + deploy
 ```
 
+CI 所需 Secrets 名：`DEPLOY_HOST`、`DEPLOY_USER`、`DEPLOY_PATH`、`DEPLOY_PORT`（可选）、`DEPLOY_SSH_KEY`。值只放在 GitHub 仓库 Settings，**不要**写进 git。细节见 [`deploy/README.md`](deploy/README.md)。
+
 `npm run sync` **默认禁用**（独立展馆，无 SB 双向/拉取）。遗留脚本仍在仓库里，仅当你显式 `npm run sync -- --enable` 才会跑；日常不要用。
 
 ## 三、部署到 VPS
 
 1. 服务器上准备好 `rsync` 与 Caddy；站点目录例如 `/var/www/atlas`。
-2. 本机 `.env` 填 `DEPLOY_HOST` / `DEPLOY_USER` / `DEPLOY_PATH`。
-3. 把 [`deploy/Caddyfile`](deploy/Caddyfile) 改成你的域名与凭据，放到服务器上 reload。
+2. 在 GitHub 仓库 Settings → Secrets 填 `DEPLOY_*`（见上）；日常推 `main` 即自动部署。
+3. 本机紧急发布仍可：`.env` 填同名变量后 `npm run publish`。
+4. 把 [`deploy/Caddyfile`](deploy/Caddyfile) 改成你的域名与凭据，放到服务器上 reload（CI **不**改 Caddy/DNS）。
 
 更多见 [`deploy/README.md`](deploy/README.md)。
 

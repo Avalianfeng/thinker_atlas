@@ -14,11 +14,32 @@ sudo systemctl reload caddy
 sudo mkdir -p /var/log/caddy && sudo chown caddy:caddy /var/log/caddy
 ```
 
-## 首次部署
+## 自动部署（GitHub Actions）
+
+推送到 `main`（或手动 `workflow_dispatch`）会跑：
+
+1. `npm ci` → `npm test` → `npm run build`
+2. `rsync` `dist/` 到 VPS（与 `scripts/deploy.mjs` 一致：`-az --delete --delete-excluded --exclude .well-known/`）
+
+工作流：[`.github/workflows/deploy.yml`](../.github/workflows/deploy.yml)。
+
+在仓库 **Settings → Secrets and variables → Actions** 配置（只填名字，值勿进 git）：
+
+| Secret | 说明 |
+| --- | --- |
+| `DEPLOY_HOST` | 例如 `vps.example.com` |
+| `DEPLOY_USER` | 例如 `atlas` |
+| `DEPLOY_PATH` | 例如 `/var/www/atlas` |
+| `DEPLOY_PORT` | 可选，默认 `22` |
+| `DEPLOY_SSH_KEY` | 部署用 SSH **私钥全文** |
+
+Secrets 未齐时，合并进 `main` 后首次 CI 会在 rsync 步失败，直到填齐。密钥与主机信息**永不**写入仓库文件。
+
+## 本地部署
 
 1. 在本机 `.env` 里填 `DEPLOY_HOST` / `DEPLOY_USER` / `DEPLOY_PATH`（见 `.env.example`）。
-2. `npm run build`，再 `npm run deploy`（等价于 `rsync -az --delete dist/ user@host:path/`）。
-3. `npm run publish` = `build` + `deploy`。
+2. `npm run build`，再 `npm run deploy`（等价于对齐上述 rsync 标志）。
+3. `npm run publish` = `build` + `deploy`（本地仍可用，不依赖 CI）。
 
 Atlas **独立运行**：展馆真源是 git `content/`，部署机不需要 SilverBullet。
 

@@ -1,46 +1,60 @@
 ---
-import Base from '@layouts/Base.astro';
-import MultiTimeline from '@components/MultiTimeline.astro';
-import { getAtlas } from '@lib/atlas';
+import Base from '../layouts/Base.astro';
+import { listPeople } from '../lib/atlas';
+import { scale, decadeTicks } from '../lib/scale';
+import path from 'node:path';
 
-const atlas = await getAtlas();
-const lanes = atlas.thinkers.map((t) => ({ thinker: t, events: atlas.life.get(t.id)?.data.events ?? [] }));
-const allKinds = ['生活', '写作', '出版', '相遇', '历史背景'];
+const people = await listPeople(path.join(process.cwd(), 'atlas'));
+const now = new Date().getFullYear();
+
+// 只画填了出生年的人
+const dated = people.filter((p) => p.born);
+const years = dated.flatMap((p) => [p.born!, p.died ?? now]);
+
+const W = 860;
+const padL = 210;
+const padR = 64;
+const rowH = 44;
+const top = 18;
+const H = top + Math.max(1, dated.length) * rowH + 40;
+
+const from = years.length ? Math.min(...years) : now - 100;
+const to = years.length ? Math.max(...years) : now;
+const x = scale([from - 2, to + 2], [padL, W - padR]);
+const ticks = decadeTicks(from - 2, to + 2);
+const axisY = top + Math.max(1, dated.length) * rowH + 4;
 ---
-<Base title="总时间线">
-  <div class="page">
-    <h1>总时间线</h1>
-    <p class="lede">
-      多人并置的泳道，叠加历史背景带（一战、魏玛、二战、1968）。同一时代的人在同一段阴影里写作——这是单人物页面看不出来的东西。
-    </p>
+<Base title="时间线">
+  <h1 class="page-title">时间线</h1>
 
-    <div class="graph-wrap">
-      <MultiTimeline lanes={lanes} />
-    </div>
-
-    <h2 class="section-title">按人物看详细时间线</h2>
-    <ul class="listing">
-      {lanes.map((l) => (
-        <li>
-          <a href={`/thinkers/${l.thinker.id.replace('atlas:', '')}/life/`}>{l.thinker.data.name.zh}</a>
-          <span class="meta">{l.events.length} 个事件</span>
-          <span class="meta num">{l.events.filter((e) => e.kind !== '历史背景').length} 条个人经历</span>
-        </li>
+  {dated.length > 0 ? (
+    <svg class="timeline" viewBox={`0 0 ${W} ${H}`} role="img" aria-label="各人物的生卒年">
+      <line class="axis" x1={padL} y1={axisY} x2={W - padR} y2={axisY} />
+      {ticks.map((y) => (
+        <g>
+          <line class="tick" x1={x(y)} y1={axisY} x2={x(y)} y2={axisY + 4} />
+          <text class="year" x={x(y)} y={axisY + 22} text-anchor="middle">{y}</text>
+        </g>
       ))}
-    </ul>
-    <p class="meta">事件分类：{allKinds.join('、')}。背景事件在图中不着色，只在人物泳道上以空心点标出。</p>
-  </div>
-</Base>
 
-<style>
-  .lede {
-    font-size: 20px;
-    max-width: 720px;
-  }
-  .graph-wrap {
-    border: 1px solid var(--rule);
-    padding: calc(var(--u) * 2);
-    margin: calc(var(--u) * 4) 0;
-    overflow-x: auto;
-  }
-</style>
+      {dated.map((p, i) => {
+        const y = top + i * rowH + rowH / 2;
+        const start = x(p.born!);
+        const end = x(p.died ?? now);
+        return (
+          <g>
+            <a href={`/people/${encodeURIComponent(p.folder)}/`}>
+              <text class="name" x={padL - 20} y={y + 5} text-anchor="end">{p.name}</text>
+            </a>
+            <line class="life" x1={start} y1={y} x2={end} y2={y} />
+            <circle class="dot" cx={start} cy={y} r="2.2" />
+            {p.died && <circle class="dot" cx={end} cy={y} r="2.2" />}
+            <text class="span" x={end + 12} y={y + 4}>{p.died ? `—${p.died}` : '—'}</text>
+          </g>
+        );
+      })}
+    </svg>
+  ) : (
+    <p class="empty">_meta.md 里还没有填年份。</p>
+  )}
+</Base>

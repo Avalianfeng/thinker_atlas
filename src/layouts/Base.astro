@@ -1,29 +1,10 @@
 ---
-import '../styles/tokens.css';
-import '../styles/fonts.css';
-import '../styles/base.css';
-import '../styles/layout.css';
-import '../styles/components.css';
-import '../styles/print.css';
-import Pagefind from '../components/Pagefind.astro';
+import '../styles/site.css';
 
 interface Props {
   title: string;
-  description?: string;
-  accent?: string;
-  bodyClass?: string;
 }
-const { title, description = '私人思想展馆', accent, bodyClass } = Astro.props;
-const path = Astro.url.pathname;
-const nav = [
-  { href: '/', label: '展厅' },
-  { href: '/thinkers/', label: '人物' },
-  { href: '/timeline/', label: '时间线' },
-  { href: '/genealogy/', label: '谱系' },
-  { href: '/index/', label: '索引' },
-  { href: '/search/', label: '搜索' },
-];
-const isCurrent = (href: string) => (href === '/' ? path === '/' : path.startsWith(href));
+const { title } = Astro.props;
 ---
 <!doctype html>
 <html lang="zh-CN">
@@ -32,46 +13,42 @@ const isCurrent = (href: string) => (href === '/' ? path === '/' : path.startsWi
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="robots" content="noindex, nofollow" />
     <meta name="color-scheme" content="light dark" />
-    <title>{title} · 思想者图谱</title>
-    <meta name="description" content={description} />
+    <title>{title}</title>
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/fonts/fonts.css" />
     <script is:inline>
-      (() => {
-        const t = localStorage.getItem('atlas:theme');
-        const d = t ? t === 'dark' : window.matchMedia('(prefers-color-scheme: dark)').matches;
-        document.documentElement.dataset.theme = d ? 'dark' : 'light';
-        if (localStorage.getItem('atlas:notes') === 'off') document.documentElement.dataset.notes = 'off';
-        if (localStorage.getItem('atlas:sources') === 'off') document.documentElement.dataset.sources = 'off';
-      })();
+      // 定初始配色，避免先闪一下白底。唯一的脚本在页脚，这里只读一次 localStorage。
+      try {
+        const saved = localStorage.getItem('atlas:scheme');
+        if (saved ? saved === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches)
+          document.documentElement.dataset.theme = 'dark';
+      } catch {}
     </script>
   </head>
-  <body class={bodyClass} style={accent ? `--accent:${accent}` : undefined}>
-    <a class="sr-only" href="#main">跳到正文</a>
-    <header class="site-header">
-      <div class="inner">
-        <a class="site-title" href="/">思想者图谱<span class="latin">Thinker’s Atlas</span></a>
-        <nav class="site-nav" aria-label="主导航">
-          {nav.map((n) => <a href={n.href} aria-current={isCurrent(n.href) ? 'page' : undefined}>{n.label}</a>)}
-        </nav>
-        <div class="toggles" aria-label="显示开关">
-          <button class="toggle" id="tg-sources" type="button" aria-pressed="true">来源</button>
-          <button class="toggle" id="tg-notes" type="button" aria-pressed="true">批注</button>
-          <button class="toggle" id="tg-theme" type="button" aria-pressed="false">夜读</button>
-        </div>
-      </div>
-    </header>
-    <main id="main">
+  <body>
+    <main>
       <slot />
     </main>
-    <footer class="site-footer">
-      <div class="inner">
-        <span>私人展馆 · 仅自己可见</span>
-        <span>内容以 Markdown 存于 git，来源逐段标注</span>
-        <Pagefind />
-      </div>
+    <footer>
+      <button type="button" id="scheme" class="scheme">夜间</button>
+      <span class="sep">·</span>
+      <a href="/timeline/">时间线</a>
     </footer>
     <script>
-      import '../scripts/toggles';
+      const button = document.getElementById('scheme') as HTMLButtonElement | null;
+      const root = document.documentElement;
+      const paint = () => button && (button.textContent = root.dataset.theme === 'dark' ? '日间' : '夜间');
+
+      paint();
+      button?.addEventListener('click', () => {
+        const dark = root.dataset.theme !== 'dark';
+        if (dark) root.dataset.theme = 'dark';
+        else delete root.dataset.theme;
+        try {
+          localStorage.setItem('atlas:scheme', dark ? 'dark' : 'light');
+        } catch {}
+        paint();
+      });
     </script>
   </body>
 </html>

@@ -1,0 +1,50 @@
+---
+import Base from '../../layouts/Base.astro';
+import { readPerson, initialOf } from '../../lib/atlas';
+import { toHtml, resolveImages } from '../../lib/markdown';
+import path from 'node:path';
+
+export async function getStaticPaths() {
+  const { listPeople } = await import('../../lib/atlas');
+  const people = await listPeople(path.join(process.cwd(), 'atlas'));
+  return people.map((p) => ({ params: { person: p.folder }, props: { folder: p.folder } }));
+}
+
+const root = path.join(process.cwd(), 'atlas');
+const person = await readPerson(root, Astro.props.folder as string);
+
+// 图片按 /atlas/<文件夹>/ 解析，md 里写相对路径就行
+const imageBase = person ? `/atlas/${encodeURIComponent(person.folder)}` : '';
+const units = person
+  ? await Promise.all(
+      person.sections.map(async (s) => ({ ...s, html: resolveImages(await toHtml(s.body), imageBase) })),
+    )
+  : [];
+const dates = person ? [person.born, person.died].filter(Boolean).join('—') : '';
+---
+{person ? (
+  <Base title={person.name}>
+    <header class="head">
+      {person.photoUrl ? (
+        <img class="photo" src={person.photoUrl} alt="" width="480" height="600" />
+      ) : (
+        <span class="photo initial" aria-hidden="true">{initialOf(person.name)}</span>
+      )}
+      <div>
+        <h1>{person.name}</h1>
+        {dates && <p class="dates">{dates}</p>}
+      </div>
+    </header>
+
+    {units.map((u) => (
+      <section class="unit">
+        <h2 class="unit-title">{u.title}</h2>
+        <div class="prose" set:html={u.html} />
+      </section>
+    ))}
+  </Base>
+) : (
+  <Base title="没有这一页">
+    <p class="empty">atlas/ 里没有这个文件夹。</p>
+  </Base>
+)}

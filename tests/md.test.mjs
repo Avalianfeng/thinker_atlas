@@ -1,58 +1,45 @@
 import { describe, it, expect } from 'vitest';
-import { mdxToHtml } from '../src/lib/md';
+import { toHtml } from '../src/lib/markdown';
 
-const html = (s) => mdxToHtml(s) ?? '';
-
-describe('MDX → 纯 HTML 降级（给 JSON 接口用）', () => {
-  it('Block 变成引用块并标注来源', () => {
-    const out = html('<Block from="transcribed" source="TLP 5.6">我的语言的界限。</Block>');
-    expect(out).toContain('<blockquote>');
-    expect(out).toContain('我的语言的界限。');
-    expect(out).toContain('[来源：transcribed｜TLP 5.6]');
+describe('Markdown 渲染', () => {
+  it('普通结构：标题、列表、表格、引用、代码', async () => {
+    const html = await toHtml('## 标题\n\n- 一\n- 二\n\n| a | b |\n| - | - |\n| 1 | 2 |\n\n> 引用\n\n`code`');
+    expect(html).toContain('<h2');
+    expect(html).toContain('<li>一</li>');
+    expect(html).toContain('<table>');
+    expect(html).toContain('<blockquote>');
+    expect(html).toContain('<code>code</code>');
   });
 
-  it('Quote 带原文与出处', () => {
-    const out = html('<Quote prop="§43" source="PU §43" original="Die Bedeutung...">意义即用法。</Quote>');
-    expect(out).toContain('意义即用法。');
-    expect(out).toContain('Die Bedeutung...');
-    expect(out).toContain('PU §43');
-    expect(out).toContain('<strong>§43</strong>');
+  it('不认识的组件降级成里面的文字，标签不泄漏', async () => {
+    const html = await toHtml('<Block from="transcribed" source="某书 5.6">我的语言的界限。</Block>');
+    expect(html).not.toContain('<Block');
+    expect(html).toContain('我的语言的界限。');
   });
 
-  it('Note 变成带标题的引用', () => {
-    const out = html('<Note title="疑问">这一步太快。</Note>');
-    expect(out).toContain('我的批注：疑问');
-    expect(out).toContain('这一步太快。');
+  it('自闭合组件直接消失，不留下痕迹', async () => {
+    const html = await toHtml('正文\n\n<SBNote page="notes/x" />\n\n后面');
+    expect(html).not.toContain('SBNote');
+    expect(html).toContain('正文');
   });
 
-  it('Sidenote 变行内旁注，Todo 变待写', () => {
-    expect(html('<Sidenote>补充说明</Sidenote>')).toContain('（旁注：补充说明）');
-    expect(html('<Todo>还没写</Todo>')).toContain('[待写：还没写]');
+  it('import/export 行被丢掉', async () => {
+    const html = await toHtml('import X from "y";\nexport const a = 1;\n\n正文');
+    expect(html).not.toContain('import');
+    expect(html).toContain('正文');
   });
 
-  it('Dialogue 变虚构对话，保留发言人', () => {
-    const out = html('<Dialogue title="x"><Say who="甲">问题？</Say><Say who="乙">回答。</Say></Dialogue>');
-    expect(out).toContain('虚构对话');
-    expect(out).toContain('**甲**'.replace(/\*/g, '') ? '甲' : '甲');
-    expect(out).toContain('问题？');
-    expect(out).toContain('回答。');
+  it('代码块里的尖括号原样保留', async () => {
+    const html = await toHtml('```html\n<div class="x">hi</div>\n```');
+    expect(html).toContain('class="x"');
   });
 
-  it('删掉 import 行，不把 JSX 漏进 HTML', () => {
-    const out = html('import X from "y";\n\n正文 <Prop n="5.6" /> 之后');
-    expect(out).not.toContain('import');
-    expect(out).not.toContain('<Prop');
-    expect(out).toContain('5.6');
+  it('空内容返回空字符串，不抛错', async () => {
+    expect(await toHtml('')).toBe('');
+    expect(await toHtml(undefined)).toBe('');
   });
 
-  it('保留标题、列表、表格等基本 Markdown 结构', () => {
-    const out = html('## 标题\n\n- 一\n- 二\n\n| a | b |\n| --- | --- |\n| 1 | 2 |');
-    expect(out).toContain('<h2>标题</h2>');
-    expect(out).toContain('<li>一</li>');
-    expect(out).toContain('<table>');
-  });
-
-  it('空正文返回 null', () => {
-    expect(mdxToHtml(undefined)).toBeNull();
+  it('奇怪的东西也不炸：没有闭合的标签、花括号、纯符号', async () => {
+    await expect(toHtml('<Foo 没闭合\n{奇怪} *** \u0000')).resolves.toBeTypeOf('string');
   });
 });

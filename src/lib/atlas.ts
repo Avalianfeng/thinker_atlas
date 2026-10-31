@@ -1,249 +1,227 @@
-import { getCollection, type CollectionEntry } from 'astro:content';
-import { provenanceStats, addStats, emptyStats, type ProvenanceStats } from './provenance';
-import { lastModified } from './git';
-import { parseId, normalizeRef, thinkerUrl, conceptUrl, workUrl, yearOf, lifespan } from './ids';
+/**
+ * 唯一的读取接口：列出人物、读一个人。
+ *
+ * 本地文件夹是唯一的实现。页面只认这两个函数返回的形状。
+ * SilverBullet 的实现留在文件末尾，是空的。
+ */
+import { readdir, readFile } from 'node:fs/promises';
+import path from 'node:path';
+import { load } from 'js-yaml';
 
-export { parseId, normalizeRef, thinkerUrl, conceptUrl, workUrl, yearOf, lifespan };
-
-export type Thinker = CollectionEntry<'thinkers'>;
-export type Concept = CollectionEntry<'concepts'>;
-export type Work = CollectionEntry<'works'>;
-export type Relation = CollectionEntry<'relations'>;
-export type Life = CollectionEntry<'life'>;
-export type Afterlife = CollectionEntry<'afterlife'>;
-export type PathEntry = CollectionEntry<'paths'>;
-export type Journal = CollectionEntry<'journal'>;
-export type SBNoteEntry = CollectionEntry<'sbnotes'>;
-
-export type EntityKind = 'thinker' | 'concept' | 'work' | 'journal';
-
-export interface EntityRef {
-  id: string;
-  kind: EntityKind;
+export interface Section {
+  /** 文件名，如 00-生平.md */
+  file: string;
+  /** 显示用的小节标题 */
   title: string;
-  url: string;
-  thinker?: string;
+  /** 正文（已去掉标题那一行） */
+  body: string;
 }
 
-const asArray = (v: string | string[] | undefined) => (v === undefined ? [] : Array.isArray(v) ? v : [v]);
-
-let cache: Promise<Atlas> | null = null;
-
-export interface Atlas {
-  thinkers: Thinker[];
-  concepts: Concept[];
-  works: Work[];
-  relations: Relation[];
-  life: Map<string, Life>;
-  afterlife: Map<string, Afterlife>;
-  paths: Map<string, PathEntry>;
-  journal: Journal[];
-  sbnotes: SBNoteEntry[];
-  entities: Map<string, EntityRef>;
-  /** 随笔的稳定 ID → 页面地址，供接口与页面共用 */
-  journalUrl: (id: string) => string;
-  thinker(id: string): Thinker;
-  conceptsOf(id: string): Concept[];
-  worksOf(id: string): Work[];
-  relationsOf(id: string): Relation[];
-  journalFor(id: string): Journal[];
-  notesFor(id: string): SBNoteEntry[];
-  statsOf(id: string): ProvenanceStats;
-  updatedOf(id: string): string | undefined;
-  ref(id: string): EntityRef;
+export interface Person {
+  /** 文件夹名，也是显示名 */
+  folder: string;
+  name: string;
+  born?: number;
+  died?: number;
+  /** 文件夹里的照片文件名 */
+  photo?: string;
+  /** 照片在页面上的地址 */
+  photoUrl?: string;
+  sections: Section[];
 }
 
-/** 随笔的稳定 ID 与页面地址。文件名（含中文）只用于 URL，ID 用 ASCII slug。 */
-export const journalId = (id: string) => {
-  const ascii = id
-    .replace(/\.md$/, '')
-    .split('/')
-    .map((seg) =>
-      /^[a-z0-9-]+$/i.test(seg)
-        ? seg.toLowerCase()
-        : [...seg].map((ch) => (/[a-z0-9-]/i.test(ch) ? ch.toLowerCase() : `u${ch.codePointAt(0)!.toString(16)}`)).join(''),
-    )
-    .join('/');
-  return `atlas:journal/${ascii}`;
-};
-export const journalUrl = (id: string) => `/journal/${id}/`;
+const IMAGE = /\.(jpe?g|png|webp|avif|gif|svg)$/i;
+const META = '_meta.md';
 
-export const journalRefs = (j: Journal) => asArray(j.data.atlas as string | string[] | undefined).map(normalizeRef);
-export const journalTitle = (j: Journal) => (j.data.title as string | undefined) || j.id.split('/').pop()!;
-
-export function getAtlas(): Promise<Atlas> {
-  if (!cache) cache = build();
-  return cache;
-}
-
-async function build(): Promise<Atlas> {
-  const [thinkers, concepts, works, relations, life, afterlife, paths, journal, sbnotes] = await Promise.all([
-    getCollection('thinkers'),
-    getCollection('concepts'),
-    getCollection('works'),
-    getCollection('relations'),
-    getCollection('life'),
-    getCollection('afterlife'),
-    getCollection('paths'),
-    getCollection('journal'),
-    getCollection('sbnotes'),
-  ]);
-  thinkers.sort((a, b) => a.data.order - b.data.order);
-  concepts.sort((a, b) => a.data.order - b.data.order || a.data.title.localeCompare(b.data.title, 'zh'));
-  works.sort((a, b) => a.data.year - b.data.year);
-
-  const entities = new Map<string, EntityRef>();
-  const errors: string[] = [];
-  const add = (r: EntityRef, file?: string) => {
-    if (entities.has(r.id)) errors.push(`重复 ID ${r.id}（${file}）`);
-    entities.set(r.id, r);
+/** 列出所有人，顺序取自 _meta.md；没写的排在后面，按文件夹名。 */
+export async function listPeople(root: string): Promise<Person[]> {
+  const { order, people } = await readMeta(root);
+  const folders = await subfolders(root);
+  const rank = (name: string) => {
+    const i = order.indexOf(name);
+    return i === -1 ? order.length + 1 : i;
   };
-  for (const t of thinkers) add({ id: t.id, kind: 'thinker', title: t.data.name.zh, url: thinkerUrl(t.id) }, t.filePath);
-  for (const c of concepts) {
-    const th = `atlas:${parseId(c.id).thinker}`;
-    add({ id: c.id, kind: 'concept', title: c.data.title, url: conceptUrl(c.id), thinker: th }, c.filePath);
-  }
-  for (const w of works) {
-    const th = `atlas:${parseId(w.id).thinker}`;
-    add({ id: w.id, kind: 'work', title: w.data.title, url: workUrl(w.id), thinker: th }, w.filePath);
-  }
-
-  const check = (ref: string, where: string) => {
-    if (!entities.has(ref)) errors.push(`${where} 引用了不存在的条目 ${ref}`);
-  };
-  for (const c of concepts) {
-    if (!entities.has(`atlas:${parseId(c.id).thinker}`)) errors.push(`${c.filePath}: 所属人物不存在`);
-    [...c.data.builds_on, ...c.data.contrasts_with, ...c.data.works].forEach((r) => check(r, c.filePath!));
-    c.data.interlocutors.forEach((i) => check(i.concept, c.filePath!));
-    const t = thinkers.find((x) => x.id === `atlas:${parseId(c.id).thinker}`);
-    if (c.data.period && t && !t.data.periods.some((p) => p.id === c.data.period))
-      errors.push(`${c.filePath}: 时期 ${c.data.period} 未在人物档案 periods 中定义`);
-  }
-  for (const w of works) w.data.concepts.forEach((r) => check(r, w.filePath!));
-  for (const r of relations) [r.data.from, r.data.to].forEach((x) => check(x, r.filePath!));
-  for (const l of life) {
-    check(l.data.thinker, l.filePath!);
-    l.data.events.forEach((e) => e.work && check(e.work, l.filePath!));
-  }
-  for (const a of afterlife) [a.data.thinker, ...a.data.mentions].forEach((x) => check(x, a.filePath!));
-  for (const p of paths) {
-    check(p.data.thinker, p.filePath!);
-    p.data.steps.forEach((s) => s.refs.forEach((x) => check(x, p.filePath!)));
-  }
-  for (const j of journal) {
-    add({ id: journalId(j.id), kind: 'journal', title: journalTitle(j), url: journalUrl(j.id) });
-    for (const r of journalRefs(j)) if (!entities.has(r)) console.warn(`[atlas] 随笔 ${j.filePath} 的 atlas: ${r} 未找到对应条目`);
-  }
-  for (const n of sbnotes)
-    for (const r of n.data.atlas) if (!entities.has(r)) console.warn(`[atlas] SilverBullet 笔记 ${n.data.page} 的 atlas: ${r} 未找到对应条目`);
-  if (errors.length) throw new Error(`内容校验失败：\n  - ${errors.join('\n  - ')}`);
-
-  const lifeMap: Map<string, Life> = new Map(life.map((x) => [x.data.thinker, x]));
-  const afterMap: Map<string, Afterlife> = new Map(afterlife.map((x) => [x.data.thinker, x]));
-  const pathMap: Map<string, PathEntry> = new Map(paths.map((x) => [x.data.thinker, x]));
-
-  const ownerOf = (id: string) => `atlas:${parseId(id).thinker}`;
-  const touches = (target: string, id: string) => target === id || target.startsWith(id + '/');
-
-  const statsCache = new Map<string, ProvenanceStats>();
-  const atlas: Atlas = {
-    thinkers,
-    concepts,
-    works,
-    relations,
-    life: lifeMap,
-    afterlife: afterMap,
-    paths: pathMap,
-    journal,
-    sbnotes,
-    entities,
-    journalUrl,
-    thinker: (id) => {
-      const t = thinkers.find((x) => x.id === id);
-      if (!t) throw new Error(`未知人物 ${id}`);
-      return t;
-    },
-    conceptsOf: (id) => concepts.filter((c) => ownerOf(c.id) === id),
-    worksOf: (id) => works.filter((w) => ownerOf(w.id) === id),
-    relationsOf: (id) => relations.filter((r) => touches(r.data.from, id) || touches(r.data.to, id)),
-    journalFor: (id) => journal.filter((j) => journalRefs(j).some((r) => touches(r, id))),
-    notesFor: (id) => sbnotes.filter((n) => n.data.atlas.some((r) => touches(r, id))),
-    ref: (id) => {
-      const r = entities.get(id);
-      if (!r) throw new Error(`未知条目 ${id}`);
-      return r;
-    },
-    statsOf: (id) => {
-      if (statsCache.has(id)) return statsCache.get(id)!;
-      let s = emptyStats();
-      const kind = entities.get(id)?.kind;
-      if (kind === 'thinker') {
-        const bodies = [
-          thinkers.find((t) => t.id === id)?.body,
-          lifeMap.get(id)?.body,
-          afterMap.get(id)?.body,
-          pathMap.get(id)?.body,
-          ...atlas.conceptsOf(id).map((c) => c.body),
-          ...atlas.worksOf(id).map((w) => w.body),
-        ];
-        for (const b of bodies) s = addStats(s, provenanceStats(b));
-        for (const j of atlas.journalFor(id)) s = addStats(s, provenanceStats(j.body));
-      } else {
-        const e = [...concepts, ...works].find((x) => x.id === id);
-        s = provenanceStats(e?.body);
-      }
-      statsCache.set(id, s);
-      return s;
-    },
-    updatedOf: (id) => {
-      const kind = entities.get(id)?.kind;
-      if (kind === 'thinker') {
-        const files = [
-          thinkers.find((t) => t.id === id)?.filePath,
-          lifeMap.get(id)?.filePath,
-          afterMap.get(id)?.filePath,
-          pathMap.get(id)?.filePath,
-          ...atlas.conceptsOf(id).map((c) => c.filePath),
-          ...atlas.worksOf(id).map((w) => w.filePath),
-        ];
-        return files.map(lastModified).filter(Boolean).sort().pop();
-      }
-      const e = [...concepts, ...works, ...relations].find((x) => x.id === id);
-      return lastModified(e?.filePath);
-    },
-  };
-  return atlas;
+  const sorted = folders.sort((a, b) => rank(a) - rank(b) || a.localeCompare(b, 'zh-Hans-CN'));
+  return Promise.all(sorted.map((folder) => hydrate(root, folder, people[folder] ?? {})));
 }
 
-/** 把文件路径映射回条目，用于"最近修改"。 */
-export function entityForFile(atlas: Atlas, file: string): EntityRef | undefined {
-  const all: { id: string; filePath?: string }[] = [...atlas.thinkers, ...atlas.concepts, ...atlas.works];
-  const hit = all.find((e) => e.filePath === file);
-  if (hit) return atlas.entities.get(hit.id);
-  for (const [map, label, suffix] of [
-    [atlas.life, '生平', 'life/'],
-    [atlas.afterlife, '身后', 'afterlife/'],
-    [atlas.paths, '学习路径', 'path/'],
-  ] as const) {
-    for (const [tid, e] of map as Map<string, { filePath?: string }>) {
-      if (e.filePath === file) {
-        const t = atlas.entities.get(tid)!;
-        return { id: tid, kind: 'thinker', title: `${t.title} · ${label}`, url: `${t.url}${suffix}` };
-      }
+/** 读一个人；文件夹不存在返回 null。 */
+export async function readPerson(root: string, folder: string): Promise<Person | null> {
+  const folders = await subfolders(root);
+  if (!folders.includes(folder)) return null;
+  const { people } = await readMeta(root);
+  return hydrate(root, folder, people[folder] ?? {});
+}
+
+async function subfolders(root: string): Promise<string[]> {
+  try {
+    const entries = await readdir(root, { withFileTypes: true });
+    return entries
+      .filter((e) => e.isDirectory() && !e.name.startsWith('.'))
+      .map((e) => e.name);
+  } catch {
+    return [];
+  }
+}
+
+/** 把一个人的文件夹读成完整对象。读不了的部分一律降级成空，不抛错。 */
+async function hydrate(root: string, folder: string, meta: MetaPerson): Promise<Person> {
+  const dir = path.join(root, folder);
+  let names: string[] = [];
+  try {
+    names = await readdir(dir);
+  } catch {
+    /* 文件夹读不了就当空的 */
+  }
+
+  const files = names
+    .filter((n) => n.toLowerCase().endsWith('.md') && !n.startsWith('_'))
+    .sort((a, b) => a.localeCompare(b, 'zh-Hans-CN', { numeric: true }));
+
+  const sections: Section[] = [];
+  for (const file of files) {
+    let text: string;
+    try {
+      text = await readFile(path.join(dir, file), 'utf8');
+    } catch {
+      continue; // 单篇读不了就跳过
+    }
+    const { title, body } = splitTitle(text, file);
+    if (!body.trim()) continue; // 空文件不出空标题
+    sections.push({ file, title, body });
+  }
+
+  const images = names.filter((n) => IMAGE.test(n));
+  const photo =
+    meta.photo && images.includes(meta.photo)
+      ? meta.photo
+      : (images.find((n) => /portrait|photo|肖像|照片/i.test(n)) ?? images[0]);
+
+  return {
+    folder,
+    name: folder,
+    born: meta.born,
+    died: meta.died,
+    photo,
+    photoUrl: photo ? `/atlas/${encodeURIComponent(folder)}/${encodeURIComponent(photo)}` : undefined,
+    sections,
+  };
+}
+
+/* ---------- _meta.md ---------- */
+
+interface MetaPerson {
+  born?: number;
+  died?: number;
+  photo?: string;
+}
+
+interface Meta {
+  order: string[];
+  people: Record<string, MetaPerson>;
+}
+
+/**
+ * atlas/_meta.md 的 frontmatter：
+ *   顺序: [维特根斯坦, 荣格]
+ *   人物:
+ *     维特根斯坦: { 生: 1889, 卒: 1951, 照片: 照片.jpg }
+ * 读不懂就当没有。
+ */
+async function readMeta(root: string): Promise<Meta> {
+  const empty: Meta = { order: [], people: {} };
+  let text: string;
+  try {
+    text = await readFile(path.join(root, META), 'utf8');
+  } catch {
+    return empty;
+  }
+
+  const fm = /^---\r?\n([\s\S]*?)\r?\n---/.exec(text);
+  if (!fm) return empty;
+
+  let data: unknown;
+  try {
+    data = load(fm[1]);
+  } catch {
+    return empty;
+  }
+  if (!data || typeof data !== 'object') return empty;
+
+  const raw = data as Record<string, unknown>;
+  const order = Array.isArray(raw['顺序']) ? (raw['顺序'] as unknown[]).map(String) : [];
+  const people: Record<string, MetaPerson> = {};
+
+  const rawPeople = raw['人物'];
+  if (rawPeople && typeof rawPeople === 'object') {
+    for (const [folder, value] of Object.entries(rawPeople as Record<string, unknown>)) {
+      if (!value || typeof value !== 'object') continue;
+      const v = value as Record<string, unknown>;
+      people[folder] = {
+        born: toYear(v['生']),
+        died: toYear(v['卒']),
+        photo: typeof v['照片'] === 'string' ? (v['照片'] as string) : undefined,
+      };
     }
   }
-  const rel = atlas.relations.find((r) => r.filePath === file);
-  if (rel) {
-    const a = atlas.entities.get(rel.data.from)?.title ?? rel.data.from;
-    const b = atlas.entities.get(rel.data.to)?.title ?? rel.data.to;
-    return {
-      id: rel.id,
-      kind: 'concept',
-      title: `关系 · ${a} ${rel.data.directed ? '→' : '↔'} ${rel.data.type} ${b}`,
-      url: `/genealogy/?thinker=${rel.data.from.split('/')[0].replace('atlas:', '')}`,
-    };
-  }
-  const j = atlas.journal.find((x) => x.filePath === file);
-  if (j) return { id: j.id, kind: 'journal', title: `随笔 · ${journalTitle(j)}`, url: `/journal/${j.id}/` };
-  return undefined;
+
+  return { order, people };
 }
+
+function toYear(v: unknown): number | undefined {
+  const n = Number(v);
+  return Number.isFinite(n) && n > 0 ? Math.trunc(n) : undefined;
+}
+
+/* ---------- 一篇 md 的标题与正文 ---------- */
+
+/** 标题：开头的 # 标题 > frontmatter 的 title > 文件名。 */
+export function splitTitle(raw: string, file: string): { title: string; body: string } {
+  let body = (raw ?? '').replace(/^\uFEFF/, '');
+  let title: string | undefined;
+
+  const fm = /^---\r?\n([\s\S]*?)\r?\n---[ \t]*\r?\n?/.exec(body);
+  if (fm) {
+    const m = /^title:\s*(.+)$/m.exec(fm[1]);
+    if (m) title = m[1].trim().replace(/^["']|["']$/g, '');
+    body = body.slice(fm[0].length);
+  }
+
+  const trimmed = body.replace(/^\s+/, '');
+  if (trimmed.startsWith('# ')) {
+    const line = trimmed.slice(2).split('\n')[0].trim();
+    title = title || line;
+    body = trimmed.slice(2 + line.length);
+  }
+
+  return { title: title || titleFromFilename(file), body: body.replace(/^\s*\n/, '') };
+}
+
+/** 00-生平.md → 生平 */
+export function titleFromFilename(file: string): string {
+  return file
+    .replace(/\.md$/i, '')
+    .replace(/^\d+\s*[-_.、]\s*/, '')
+    .replace(/[-_]+/g, ' ')
+    .trim();
+}
+
+/** 没有照片时当排版用的那个字。 */
+export function initialOf(name: string): string {
+  return [...(name ?? '').trim()][0] ?? '·';
+}
+
+/* ---------- 未实现 ---------- */
+
+/**
+ * TODO：以 SilverBullet 的 HTTP 文件接口为源，实现上面同样的两个函数。
+ * 本轮不做：不联网、不读凭据、不做快照。
+ */
+export const silverbullet = {
+  async listPeople(): Promise<Person[]> {
+    throw new Error('SilverBullet 源尚未实现');
+  },
+  async readPerson(): Promise<Person | null> {
+    throw new Error('SilverBullet 源尚未实现');
+  },
+};

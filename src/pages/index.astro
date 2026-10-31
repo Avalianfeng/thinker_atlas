@@ -1,133 +1,24 @@
 ---
-import Base from '@layouts/Base.astro';
-import Placard from '@components/Placard.astro';
-import GraphMap from '@components/GraphMap.astro';
-import { getAtlas, entityForFile, thinkerUrl } from '@lib/atlas';
-import { recentCommits, formatDay } from '@lib/git';
-import { addStats, emptyStats } from '@lib/provenance';
+import Base from '../layouts/Base.astro';
+import { listPeople, initialOf } from '../lib/atlas';
+import path from 'node:path';
 
-const atlas = await getAtlas();
-const joinOrder = atlas.thinkers;
-const byYear = [...atlas.thinkers].sort((a, b) => String(a.data.born.date).localeCompare(String(b.data.born.date)));
-
-const recent = recentCommits(40)
-  .flatMap((c) => c.files.map((f) => ({ file: f, date: c.date, subject: c.subject })))
-  .map((r) => ({ ...r, entity: entityForFile(atlas, r.file) }))
-  .filter((r) => r.entity)
-  .filter((r, i, arr) => arr.findIndex((x) => x.entity!.id === r.entity!.id) === i)
-  .slice(0, 6);
-
-let total = emptyStats();
-for (const t of atlas.thinkers) total = addStats(total, atlas.statsOf(t.id));
+const root = path.join(process.cwd(), 'atlas');
+const people = await listPeople(root);
 ---
-<Base title="展厅墙" description="私人思想展馆：人物的生平、思想、作品、身后与谱系">
-  <div class="page">
-    <section class="wall-hero">
-      <h1>思想的展厅</h1>
-      <p class="lede">
-        每个人物是一间展厅，沿着设计好的路径进入他的思想。页面如实显示成熟度与来源占比——写到哪里，就是哪里。
-      </p>
-      <p class="meta">
-        目前 {atlas.thinkers.length} 位人物 · {atlas.concepts.length} 个概念 · {atlas.works.length} 部作品 ·
-        {atlas.relations.length} 条关系 · 已写 {(total.own + total.original + total.secondary + total.ai).toLocaleString('zh-CN')} 字
-      </p>
-    </section>
-
-    <div class="sorter">
-      <span>排序</span>
-      <input type="radio" name="sort" id="sort-join" checked />
-      <label for="sort-join">按加入顺序</label>
-      <input type="radio" name="sort" id="sort-year" />
-      <label for="sort-year">按年代</label>
-    </div>
-
-    <section class="wall" aria-label="人物展牌">
-      {joinOrder.map((t, i) => (
-        <div style={`--o-join:${i};--o-year:${byYear.findIndex((x) => x.id === t.id)}`} class="wall-cell">
-          <Placard thinker={t} index={i} />
-        </div>
-      ))}
-    </section>
-
-    <h2 class="section-title">谱系缩略</h2>
-    <div class="graph-wrap">
-      <GraphMap thinkers={atlas.thinkers} relations={atlas.relations} atlas={atlas} mini />
-    </div>
-    <p class="meta"><a href="/genealogy/">看完整谱系与全部关系条目 →</a></p>
-
-    <div class="home-cols">
-      <section>
-        <h2 class="section-title">最近修改</h2>
-        <ul class="listing">
-          {recent.map((r) => (
-            <li>
-              <a href={r.entity!.url}>{r.entity!.title}</a>
-              <span class="meta num">{formatDay(r.date)}</span>
-            </li>
-          ))}
-          {recent.length === 0 && <li class="meta">暂无提交记录。</li>}
-        </ul>
-      </section>
-      <section>
-        <h2 class="section-title">从这里开始</h2>
-        <ul class="listing">
-          <li><a href={thinkerUrl('atlas:wittgenstein')}>维特根斯坦</a><span class="meta">生长中 · 第一个展厅</span></li>
-          <li><a href="/timeline/">总时间线</a><span class="meta">多人并置，历史背景带</span></li>
-          <li><a href="/index/">索引</a><span class="meta">人物、概念、作品、术语</span></li>
-          <li><a href="/api/v1/thinkers.json">JSON 接口</a><span class="meta">只读，v1</span></li>
-        </ul>
-      </section>
-    </div>
-  </div>
+<Base title="思想者图谱">
+  <ul class="wall">
+    {people.map((p) => (
+      <li>
+        <a class="card" href={`/people/${encodeURIComponent(p.folder)}/`}>
+          {p.photoUrl ? (
+            <img class="photo" src={p.photoUrl} alt="" width="480" height="600" />
+          ) : (
+            <span class="photo initial" aria-hidden="true">{initialOf(p.name)}</span>
+          )}
+          <span class="name">{p.name}</span>
+        </a>
+      </li>
+    ))}
+  </ul>
 </Base>
-
-<style>
-  .wall-hero {
-    padding: calc(var(--u) * 4) 0 calc(var(--u) * 5);
-    border-bottom: 1px solid var(--rule);
-    margin-bottom: calc(var(--u) * 4);
-  }
-  .wall-hero h1 {
-    font-size: 40px;
-    letter-spacing: 0.06em;
-  }
-  .lede {
-    font-size: 20px;
-    max-width: 640px;
-    line-height: 1.8;
-  }
-  .wall-cell {
-    flex: 0 0 calc((100% - var(--u) * 9) / 4);
-    min-width: 220px;
-    display: flex;
-  }
-  .wall-cell :global(.placard) {
-    flex: 1;
-  }
-  @media (max-width: 1199px) {
-    .wall-cell {
-      flex-basis: calc((100% - var(--u) * 3) / 2);
-    }
-  }
-  @media (max-width: 560px) {
-    .wall-cell {
-      flex-basis: 100%;
-    }
-  }
-  .graph-wrap {
-    border: 1px solid var(--rule);
-    padding: calc(var(--u) * 2);
-    overflow-x: auto;
-  }
-  .home-cols {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: var(--gutter);
-    margin-top: calc(var(--u) * 6);
-  }
-  @media (max-width: 767px) {
-    .home-cols {
-      grid-template-columns: 1fr;
-    }
-  }
-</style>

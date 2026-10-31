@@ -1,16 +1,11 @@
 import { defineConfig } from 'astro/config';
-import mdx from '@astrojs/mdx';
-import { unified } from '@astrojs/markdown-remark';
-import rehypeCjkSpacing from './src/lib/rehype-cjk-spacing.mjs';
+import contentAssets from './scripts/content-assets.mjs';
 
 export default defineConfig({
   site: process.env.ATLAS_SITE_URL || 'http://localhost:4321',
   output: 'static',
   trailingSlash: 'always',
   build: { format: 'directory' },
-  integrations: [mdx()],
-  markdown: {
-    processor: unified({ rehypePlugins: [rehypeCjkSpacing], smartypants: false }),
-  },
+  integrations: [contentAssets()],
   devToolbar: { enabled: false },
 });

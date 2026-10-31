@@ -1,13 +1,9 @@
 node_modules/
 dist/
-.env
-.env.local
 .astro/
 tmp/
-*.conflict.md
 npm-debug.log*
 .DS_Store
 
-# 生成物：字体子集（npm run build / dev 前自动重新生成）
+# 字体子集是构建产物，每次 build 重新生成
 public/fonts/
-src/styles/fonts.css

@@ -681,25 +681,26 @@ a.prop:hover {
 }
 .placard {
   --accent: var(--ink-2);
-  flex: 0 0 calc((100% - var(--u) * 9) / 4);
-  min-width: 220px;
   text-decoration: none;
   border-top: 4px solid var(--accent);
   border-bottom: 1px solid var(--rule);
   display: flex;
-  flex-direction: column;
   transition: background var(--dur) ease;
+  color: inherit;
 }
 .placard:hover {
   background: var(--paper-2);
 }
-.placard .portrait {
-  aspect-ratio: 3 / 4;
+.placard .portrait,
+.placard .portrait-img,
+.placard .portrait-svg {
   display: block;
-  width: 100%;
+  object-fit: cover;
+  flex: none;
 }
 .placard .body {
-  padding: calc(var(--u) * 2) calc(var(--u) * 0.5) calc(var(--u) * 2);
+  min-width: 0;
+  flex: 1;
 }
 .placard .zh {
   font-family: var(--font-sans);
@@ -722,8 +723,76 @@ a.prop:hover {
 .placard .intro {
   font-size: 16px;
   line-height: 1.75;
-  margin-bottom: var(--u);
+  margin: 0;
+  color: var(--ink);
 }
+
+/* 详牌：左固定竖幅肖像，右栏铺满姓名/生卒/intro */
+html:not([data-wall-view='cards']) .wall,
+html[data-wall-view='detail'] .wall {
+  display: flex;
+  flex-direction: column;
+  flex-wrap: nowrap;
+  gap: calc(var(--u) * 3);
+}
+html:not([data-wall-view='cards']) .placard,
+html[data-wall-view='detail'] .placard {
+  flex-direction: row;
+  align-items: stretch;
+  width: 100%;
+  gap: calc(var(--u) * 3);
+  padding-bottom: calc(var(--u) * 2);
+}
+html:not([data-wall-view='cards']) .placard .portrait,
+html:not([data-wall-view='cards']) .placard .portrait-img,
+html:not([data-wall-view='cards']) .placard .portrait-svg,
+html[data-wall-view='detail'] .placard .portrait,
+html[data-wall-view='detail'] .placard .portrait-img,
+html[data-wall-view='detail'] .placard .portrait-svg {
+  width: 150px;
+  height: 200px;
+  aspect-ratio: auto;
+}
+html:not([data-wall-view='cards']) .placard .body,
+html[data-wall-view='detail'] .placard .body {
+  padding: calc(var(--u) * 1.5) calc(var(--u) * 0.5) calc(var(--u) * 1.5) 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+}
+
+/* 卡片：上图下名，无 intro；桌面 4 / 中 3 / 小 2 */
+html[data-wall-view='cards'] .wall {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: calc(var(--u) * 3);
+}
+html[data-wall-view='cards'] .placard {
+  flex-direction: column;
+  width: auto;
+  min-width: 0;
+  gap: 0;
+  padding-bottom: 0;
+}
+html[data-wall-view='cards'] .placard .portrait,
+html[data-wall-view='cards'] .placard .portrait-img,
+html[data-wall-view='cards'] .placard .portrait-svg {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 3 / 4;
+}
+html[data-wall-view='cards'] .placard .body {
+  padding: calc(var(--u) * 1.5) calc(var(--u) * 0.5) calc(var(--u) * 2);
+}
+html[data-wall-view='cards'] .placard .orig,
+html[data-wall-view='cards'] .placard .years,
+html[data-wall-view='cards'] .placard .intro {
+  display: none;
+}
+html[data-wall-view='cards'] .placard .zh {
+  font-size: var(--fs-h4);
+}
+
 .placard.mini {
   flex: 0 0 200px;
   min-width: 0;
@@ -736,6 +805,7 @@ a.prop:hover {
 }
 .placard.mini .portrait {
   width: 48px;
+  height: 64px;
   flex: none;
 }
 .placard.mini .body {
@@ -744,14 +814,42 @@ a.prop:hover {
 .placard.mini .zh {
   font-size: var(--fs-h4);
 }
+
 @media (max-width: 1199px) {
-  .placard {
-    flex-basis: calc((100% - var(--u) * 3) / 2);
+  html[data-wall-view='cards'] .wall {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
-@media (max-width: 560px) {
-  .placard {
-    flex-basis: 100%;
+@media (max-width: 767px) {
+  html[data-wall-view='cards'] .wall {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  html:not([data-wall-view='cards']) .placard .portrait,
+  html:not([data-wall-view='cards']) .placard .portrait-img,
+  html:not([data-wall-view='cards']) .placard .portrait-svg,
+  html[data-wall-view='detail'] .placard .portrait,
+  html[data-wall-view='detail'] .placard .portrait-img,
+  html[data-wall-view='detail'] .placard .portrait-svg {
+    width: 120px;
+    height: 160px;
+  }
+}
+@media (max-width: 520px) {
+  html:not([data-wall-view='cards']) .placard,
+  html[data-wall-view='detail'] .placard {
+    flex-direction: column;
+    gap: calc(var(--u) * 1.5);
+  }
+  html:not([data-wall-view='cards']) .placard .portrait,
+  html:not([data-wall-view='cards']) .placard .portrait-img,
+  html:not([data-wall-view='cards']) .placard .portrait-svg,
+  html[data-wall-view='detail'] .placard .portrait,
+  html[data-wall-view='detail'] .placard .portrait-img,
+  html[data-wall-view='detail'] .placard .portrait-svg {
+    width: 100%;
+    height: auto;
+    max-height: 220px;
+    aspect-ratio: 3 / 4;
   }
 }
 
@@ -770,8 +868,8 @@ a.prop:hover {
   object-fit: cover;
 }
 
-/* 排序切换（纯 CSS） */
-.sorter {
+/* 展厅墙视图切换 */
+.view-switch {
   font-family: var(--font-sans);
   font-size: var(--fs-small);
   color: var(--ink-2);
@@ -780,29 +878,29 @@ a.prop:hover {
   align-items: center;
   margin-bottom: calc(var(--u) * 3);
 }
-.sorter input {
-  position: absolute;
-  opacity: 0;
-  width: 1px;
-  height: 1px;
+.view-switch-label {
+  letter-spacing: 0.08em;
 }
-.sorter label {
-  cursor: pointer;
+.view-btn {
+  font: inherit;
+  color: var(--ink-2);
+  background: transparent;
+  border: 0;
   border-bottom: 1px solid transparent;
+  padding: 2px 0;
+  cursor: pointer;
 }
-.sorter input:checked + label {
+.view-btn[aria-pressed='true'] {
   color: var(--ink);
   border-bottom-color: var(--ink);
 }
-.sorter input:focus-visible + label {
-  outline: 2px solid var(--p-own);
+.view-btn:hover,
+.view-btn:focus-visible {
+  color: var(--ink);
 }
-.wall-cell {
-  order: var(--o-join, 0);
-}
-/* 展厅墙排序：纯 CSS，靠 :has 读单选框状态，无 JS */
-body:has(#sort-year:checked) .wall-cell {
-  order: var(--o-year, 0);
+.view-btn:focus-visible {
+  outline: 2px solid var(--ink-2);
+  outline-offset: 2px;
 }
 
 /* ---------- 展厅头部 ---------- */

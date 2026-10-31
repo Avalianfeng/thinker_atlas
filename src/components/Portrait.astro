@@ -2,12 +2,14 @@
 interface Props {
   name: string;
   original?: string;
-  years: string;
+  years?: string;
   accent: string;
   src?: string;
   class?: string;
+  /** 字母占位是否叠生卒；展牌详牌/卡片关掉以免与右侧文字重复 */
+  showYears?: boolean;
 }
-const { name, original, years, accent, src, class: cls } = Astro.props;
+const { name, original, years = '', accent, src, class: cls, showYears = true } = Astro.props;
 const initial = (original || name).trim().charAt(0);
 const seed = [...name].reduce((a, c) => a + c.codePointAt(0)!, 0);
 const rule = 40 + (seed % 40);
@@ -19,6 +21,8 @@ const rule = 40 + (seed % 40);
     <rect class="bg" width="300" height="400" />
     <line class="rule" x1="24" y1={rule + 300} x2="276" y2={rule + 300} />
     <text class="fg" x="150" y="215" text-anchor="middle" font-size="132" opacity="0.85">{initial}</text>
-    <text class="fg" x="150" y={rule + 292} text-anchor="middle" font-size="15" opacity="0.7" letter-spacing="2">{years}</text>
+    {showYears && years && (
+      <text class="fg" x="150" y={rule + 292} text-anchor="middle" font-size="15" opacity="0.7" letter-spacing="2">{years}</text>
+    )}
   </svg>
 )}

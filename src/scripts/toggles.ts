@@ -1,7 +1,7 @@
-// 仅有的前端交互：亮暗主题切换。状态存 localStorage。
+// 前端交互：亮暗主题 + 展厅墙视图。状态存 localStorage。
 const root = document.documentElement;
 
-function init() {
+function initTheme() {
   const themeBtn = document.getElementById('tg-theme');
   const icon = themeBtn?.querySelector('.theme-icon');
 
@@ -19,6 +19,34 @@ function init() {
     localStorage.setItem('atlas:theme', dark ? 'dark' : 'light');
     syncTheme(dark);
   });
+}
+
+function initWallView() {
+  const buttons = Array.from(document.querySelectorAll<HTMLButtonElement>('.view-btn[data-wall-view]'));
+  if (buttons.length === 0) return;
+
+  const sync = (view: 'detail' | 'cards') => {
+    root.dataset.wallView = view;
+    for (const btn of buttons) {
+      btn.setAttribute('aria-pressed', String(btn.dataset.wallView === view));
+    }
+  };
+
+  const stored = localStorage.getItem('atlas:wall-view');
+  sync(stored === 'cards' ? 'cards' : 'detail');
+
+  for (const btn of buttons) {
+    btn.addEventListener('click', () => {
+      const view = btn.dataset.wallView === 'cards' ? 'cards' : 'detail';
+      localStorage.setItem('atlas:wall-view', view);
+      sync(view);
+    });
+  }
+}
+
+function init() {
+  initTheme();
+  initWallView();
 }
 
 if (document.readyState !== 'loading') init();

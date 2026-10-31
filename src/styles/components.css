@@ -435,22 +435,31 @@ a.prop:hover {
   top: 1.05em;
   width: 7px;
   height: 7px;
+  box-sizing: border-box;
   border-radius: 50%;
   background: var(--ink);
-  border: 1px solid var(--ink);
+  border: none;
+}
+/* kind 用形状，不用配色 */
+.timeline-v li.k-write::before {
+  background: var(--paper);
+  border: 1.5px solid var(--ink);
 }
 .timeline-v li.k-publish::before,
 .timeline-v li.k-出版::before {
-  background: var(--accent, var(--ink-2));
-  border-color: var(--accent, var(--ink-2));
-}
-.timeline-v li.k-write::before {
-  background: var(--paper);
-  border-color: var(--accent, var(--ink-2));
+  border-radius: 0;
+  background: var(--ink);
+  border: none;
 }
 .timeline-v li.k-meet::before {
-  background: var(--ink-2);
-  border-color: var(--ink-2);
+  width: 6px;
+  height: 6px;
+  left: -3.5px;
+  top: 1.15em;
+  border-radius: 0;
+  background: var(--ink);
+  border: none;
+  transform: rotate(45deg);
 }
 .timeline-v li.k-context,
 .timeline-v li.k-历史背景 {
@@ -458,8 +467,20 @@ a.prop:hover {
 }
 .timeline-v li.k-context::before,
 .timeline-v li.k-历史背景::before {
-  background: var(--paper);
-  border-color: var(--rule);
+  width: 0;
+  height: 0;
+  left: -5px;
+  top: 0.95em;
+  border-radius: 0;
+  background: transparent;
+  border-left: 4.5px solid transparent;
+  border-right: 4.5px solid transparent;
+  border-bottom: 8px solid transparent;
+  border-top: none;
+  /* 空心三角：外框用 box-shadow 近似；退而用描边色块 */
+  border-bottom-color: var(--ink);
+  opacity: 0.85;
+  clip-path: none;
 }
 .timeline-v .when {
   font-family: var(--font-sans);
@@ -1136,32 +1157,51 @@ html[data-wall-view='cards'] .placard .zh {
   font-size: 11px;
   opacity: 0.55;
 }
-.mtl .ev {
+/* kind 用形状区分，统一墨色；行线颜色才是人物 accent */
+.mtl .ev-mark {
+  pointer-events: none;
+}
+.mtl .ev-mark.filled {
   fill: var(--ink);
+  stroke: none;
+}
+.mtl .ev-mark.hollow {
+  fill: var(--paper);
+  stroke: var(--ink);
+  stroke-width: 1.5;
+}
+.mtl .ev {
+  fill: transparent;
   stroke: none;
   cursor: pointer;
 }
-.mtl .ev.k-life {
+.mtl-legend {
+  list-style: none;
+  margin: calc(var(--u) * 1.5) 0 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--u) calc(var(--u) * 2.5);
+  font-family: var(--font-sans);
+  font-size: var(--fs-tiny);
+  color: var(--ink-2);
+}
+.mtl-legend li {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35em;
+}
+.mtl-legend svg {
+  display: block;
+}
+.mtl-legend .ev-mark.filled {
   fill: var(--ink);
   stroke: none;
 }
-.mtl .ev.k-publish {
-  fill: var(--accent, var(--ink));
-  stroke: none;
-}
-.mtl .ev.k-write {
+.mtl-legend .ev-mark.hollow {
   fill: var(--paper);
-  stroke: var(--accent, var(--ink));
+  stroke: var(--ink);
   stroke-width: 1.5;
-}
-.mtl .ev.k-meet {
-  fill: var(--ink-2);
-  stroke: none;
-}
-.mtl .ev.k-context {
-  fill: var(--paper);
-  stroke: var(--rule);
-  stroke-width: 1.25;
 }
 .mtl .ev-label {
   fill: var(--ink-2);

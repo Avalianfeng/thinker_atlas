@@ -13,6 +13,7 @@ import {
   estimateLabelWidth,
   layoutLaneLabels,
 } from '../src/lib/timeline-yml';
+import { COOL_ACCENTS, KIND_SHAPE, personAccent } from '../src/lib/accents';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -181,5 +182,39 @@ describe('同行标签避让', () => {
     const shown = stack.filter((p) => p.show).length;
     expect(shown).toBeLessThanOrEqual(4);
     expect(stack.some((p) => !p.show)).toBe(true);
+  });
+});
+
+
+describe('personAccent / KIND_SHAPE', () => {
+  it('冷色盘无暖色；按 order 稳定取色', () => {
+    expect(COOL_ACCENTS.length).toBeGreaterThanOrEqual(5);
+    for (const c of COOL_ACCENTS) {
+      expect(c).toMatch(/^#[0-9A-Fa-f]{6}$/);
+      // 粗略：B 通道不低于 R（偏蓝青），排除明显暖棕
+      const r = parseInt(c.slice(1, 3), 16);
+      const b = parseInt(c.slice(5, 7), 16);
+      expect(b).toBeGreaterThanOrEqual(r - 8);
+    }
+    expect(personAccent({ order: 1 })).toBe(COOL_ACCENTS[1]);
+    expect(personAccent({ order: 2 })).toBe(COOL_ACCENTS[2]);
+    expect(personAccent({ order: 1 + COOL_ACCENTS.length })).toBe(COOL_ACCENTS[1]);
+  });
+
+  it('无 order 时按 id 稳定哈希', () => {
+    const a = personAccent({ id: 'wittgenstein' });
+    const b = personAccent({ id: 'wittgenstein' });
+    expect(a).toBe(b);
+    expect(COOL_ACCENTS).toContain(a);
+  });
+
+  it('五类 kind 各有形状符号', () => {
+    expect(KIND_SHAPE).toMatchObject({
+      life: 'filled-circle',
+      write: 'hollow-circle',
+      publish: 'filled-square',
+      meet: 'filled-diamond',
+      context: 'hollow-triangle',
+    });
   });
 });

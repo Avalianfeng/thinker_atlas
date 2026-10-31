@@ -2,8 +2,9 @@
 /**
  * 主页底部多人横向时间线。
  * - 每行一人；横轴时间；圆点旁常显短标题（同行避让）
- * - 行线 = born→died（无 born 回退事件跨度；在世用至今年）
- * - 悬停或点击开 tip（可含时年）；点空白 / Esc 关；圆点不跳转
+ * - 行线 = born→died（无 born 回退事件跨度；在世用至今年）；行色=人物冷色 accent
+ * - kind 用形状区分（非配色）：●○■◆△
+ * - 悬停或点击开 tip（可含时年、kind）；点空白 / Esc 关；标记不跳转
  * - 可横向拖/滑
  */
 import { scale, tickYears } from '@lib/timeline';
@@ -11,10 +12,12 @@ import { yearOf } from '@lib/ids';
 import {
   ageAtEvent,
   formatEventWhen,
+  KIND_LABEL,
   laneLifeSpan,
   layoutLaneLabels,
   multiYearSpan,
   shortTitle,
+  type TimelineKind,
   type TimelineLane,
 } from '@lib/timeline-yml';
 
@@ -43,7 +46,8 @@ type Pt = {
   title: string;
   short: string;
   person: string;
-  kind: string;
+  kind: TimelineKind;
+  kindLabel: string;
   age?: number;
   showLabel: boolean;
   labelDy: number;
@@ -76,6 +80,7 @@ if (!empty) {
         short: r.short,
         person: lane.name,
         kind: r.e.kind,
+        kindLabel: KIND_LABEL[r.e.kind] ?? r.e.kind,
         age,
         showLabel: place.show,
         labelDy: place.dy,
@@ -84,6 +89,23 @@ if (!empty) {
     });
   });
 }
+
+const R = 4.5;
+function diamondPts(cx: number, cy: number, r = R) {
+  return `${cx},${cy - r} ${cx + r},${cy} ${cx},${cy + r} ${cx - r},${cy}`;
+}
+function trianglePts(cx: number, cy: number, r = R) {
+  // 向上空心三角外接
+  return `${cx},${cy - r} ${cx + r},${cy + r * 0.75} ${cx - r},${cy + r * 0.75}`;
+}
+
+const legend: { kind: TimelineKind; label: string; shape: string }[] = [
+  { kind: 'life', label: KIND_LABEL.life, shape: 'filled-circle' },
+  { kind: 'write', label: KIND_LABEL.write, shape: 'hollow-circle' },
+  { kind: 'publish', label: KIND_LABEL.publish, shape: 'filled-square' },
+  { kind: 'meet', label: KIND_LABEL.meet, shape: 'filled-diamond' },
+  { kind: 'context', label: KIND_LABEL.context, shape: 'hollow-triangle' },
+];
 ---
 {empty ? (
   <p class="meta mtl-empty">暂无多人事件（需在 timeline.yml 中设 multi: true）。</p>
@@ -129,18 +151,27 @@ if (!empty) {
                   y2={p.cy + p.labelDy - (p.labelDy > 0 ? 4 : -2)}
                 />
               )}
+              {p.kind === 'life' && <circle class="ev-mark filled" cx={p.cx} cy={p.cy} r={R} />}
+              {p.kind === 'write' && <circle class="ev-mark hollow" cx={p.cx} cy={p.cy} r={R} />}
+              {p.kind === 'publish' && (
+                <rect class="ev-mark filled" x={p.cx - R} y={p.cy - R} width={R * 2} height={R * 2} />
+              )}
+              {p.kind === 'meet' && <polygon class="ev-mark filled" points={diamondPts(p.cx, p.cy)} />}
+              {p.kind === 'context' && <polygon class="ev-mark hollow" points={trianglePts(p.cx, p.cy)} />}
+              {/* 透明命中区：脚本只绑 .ev，标记本身不接指针 */}
               <circle
-                class={`ev k-${p.kind}`}
+                class="ev"
                 cx={p.cx}
                 cy={p.cy}
-                r="4.5"
+                r="9"
                 data-when={p.when}
                 data-title={p.title}
                 data-person={p.person}
+                data-kind-label={p.kindLabel}
                 data-age={p.age !== undefined ? String(p.age) : undefined}
                 tabindex="0"
                 role="button"
-                aria-label={`${p.person} ${p.when} ${p.title}${p.age !== undefined ? ` 时年 ${p.age}` : ''}`}
+                aria-label={`${p.person} ${p.when} ${p.title}${p.age !== undefined ? ` 时年 ${p.age}` : ''} ${p.kindLabel}`}
               />
               {p.showLabel && (
                 <text class="ev-label" x={p.cx} y={p.cy + p.labelDy} text-anchor="middle">
@@ -152,6 +183,20 @@ if (!empty) {
         </svg>
       </div>
     </div>
+    <ul class="mtl-legend" aria-label="事件类型图例">
+      {legend.map((item) => (
+        <li data-shape={item.shape}>
+          <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">
+            {item.shape === 'filled-circle' && <circle class="ev-mark filled" cx="7" cy="7" r="4.5" />}
+            {item.shape === 'hollow-circle' && <circle class="ev-mark hollow" cx="7" cy="7" r="4.5" />}
+            {item.shape === 'filled-square' && <rect class="ev-mark filled" x="2.5" y="2.5" width="9" height="9" />}
+            {item.shape === 'filled-diamond' && <polygon class="ev-mark filled" points="7,2 12,7 7,12 2,7" />}
+            {item.shape === 'hollow-triangle' && <polygon class="ev-mark hollow" points="7,2 12,11.5 2,11.5" />}
+          </svg>
+          <span>{item.label}</span>
+        </li>
+      ))}
+    </ul>
     <div class="mtl-tip" data-mtl-tip hidden></div>
   </div>
 )}
@@ -204,12 +249,13 @@ if (!empty) {
       const when = el.dataset.when ?? '';
       const title = el.dataset.title ?? '';
       const person = el.dataset.person ?? '';
+      const kindLabel = el.dataset.kindLabel ?? '';
       const age = el.dataset.age;
+      const parts = [person, when, title];
+      if (kindLabel) parts.push(kindLabel);
+      if (age !== undefined && age !== '') parts.push(`时年 ${age}`);
       tip.hidden = false;
-      tip.textContent =
-        age !== undefined && age !== ''
-          ? `${person} · ${when} · ${title} · 时年 ${age}`
-          : `${person} · ${when} · ${title}`;
+      tip.textContent = parts.join(' · ');
       if (clientX != null && clientY != null) {
         placeTip(clientX, clientY);
       } else {
@@ -242,7 +288,7 @@ if (!empty) {
         if (pinned === el) return;
         hideIfUnpinned();
       });
-      // Aeris：点击圆点不进入人物页；悬停或点击都开 tip
+      // Aeris：点击标记不进入人物页；悬停或点击都开 tip
       el.addEventListener('click', (e) => {
         e.preventDefault();
         e.stopPropagation();

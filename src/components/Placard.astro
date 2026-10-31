@@ -2,6 +2,7 @@
 import Portrait from './Portrait.astro';
 import { lifespan, personUrl } from '../lib/atlas';
 import { resolvePortrait, personSlug } from '../lib/portrait';
+import { personAccent } from '../lib/accents';
 interface Props {
   person: any;
   index?: number;
@@ -12,9 +13,7 @@ const t = person.data;
 const years = lifespan(person);
 const slug = personSlug(person.id);
 const portraitSrc = resolvePortrait(slug, t.portrait);
-const seed = [...String(t.name)].reduce((a: number, c: string) => a + c.codePointAt(0)!, 0);
-const accents = ['#6E7F94', '#8B7355', '#5F7A6A', '#7A6A82', '#8A6E5C'];
-const accent = accents[seed % accents.length];
+const accent = personAccent({ order: t.order, id: person.id });
 const en = t.name_en || '';
 ---
 <a

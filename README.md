@@ -27,7 +27,7 @@ npm run preview   # 预览 dist/
 npm test          # 单元测试与内容自检
 ```
 
-> Node 需要 `>=22.23.4`（Astro 7）。字体：正文 `Noto Serif SC`、UI `Noto Sans SC`（`@fontsource` 自托管，unicode-range 分包）。
+> Node 需要 `>=22.23.4`（Astro 7）。字体：正文拉丁 `Source Serif 4` + 中文 `Noto Serif SC`，UI `Noto Sans SC`（`@fontsource` 自托管，unicode-range 分包）。
 
 ## 二、日常三件事
 

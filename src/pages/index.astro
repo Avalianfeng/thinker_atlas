@@ -2,8 +2,7 @@
 import Base from '@layouts/Base.astro';
 import Placard from '@components/Placard.astro';
 import MultiTimeline from '@components/MultiTimeline.astro';
-import { getAtlas, entityForFile, personUrl } from '@lib/atlas';
-import { recentCommits, formatDay } from '@lib/git';
+import { getAtlas } from '@lib/atlas';
 import { loadMultiLanes } from '@lib/timeline-yml';
 import { accentMapForPeople, type AccentPerson } from '@lib/accents';
 
@@ -34,15 +33,8 @@ const multiLanes = loadMultiLanes(
     died: p.data.died ? String(p.data.died) : undefined,
   })),
 );
-
-const recent = recentCommits(40)
-  .flatMap((c) => c.files.map((f) => ({ file: f, date: c.date, subject: c.subject })))
-  .map((r) => ({ ...r, entity: entityForFile(atlas, r.file) }))
-  .filter((r) => r.entity)
-  .filter((r, i, arr) => arr.findIndex((x) => x.entity!.id === r.entity!.id) === i)
-  .slice(0, 6);
 ---
-<Base title="展厅墙" description="私人思想展馆：一人一夹，标准 Markdown">
+<Base title="展厅墙" description="私人思想展馆">
   <script is:inline>
     (() => {
       const v = localStorage.getItem('atlas:wall-view');
@@ -52,10 +44,6 @@ const recent = recentCommits(40)
   <div class="page">
     <section class="wall-hero">
       <h1>思想的展厅</h1>
-      <p class="lede">
-        每个人物是一间展厅。内容在 git 的 <code>content/people/</code>，标准 Markdown，独立构建。
-      </p>
-      <p class="meta">目前 {atlas.people.length} 位人物 · {atlas.pieces.length} 篇正文</p>
     </section>
 
     <div class="view-switch" role="group" aria-label="视图">
@@ -83,32 +71,9 @@ const recent = recentCommits(40)
       })();
     </script>
 
-    <div class="home-cols">
-      <section>
-        <h2 class="section-title">最近修改</h2>
-        <ul class="listing">
-          {recent.map((r) => (
-            <li>
-              <a href={r.entity!.url}>{r.entity!.title}</a>
-              <span class="meta num">{formatDay(r.date)}</span>
-            </li>
-          ))}
-          {recent.length === 0 && <li class="meta">暂无提交记录。</li>}
-        </ul>
-      </section>
-      <section>
-        <h2 class="section-title">从这里开始</h2>
-        <ul class="listing">
-          <li><a href={personUrl('wittgenstein')}>维特根斯坦</a><span class="meta">样例展厅</span></li>
-          <li><a href={personUrl('russell')}>罗素</a><span class="meta">多人线样例</span></li>
-        </ul>
-      </section>
-    </div>
-
     {multiLanes.length > 0 && (
       <section class="home-multi" aria-label="多人时间线">
         <h2 class="section-title">多人时间线</h2>
-        <p class="meta mtl-lede">各人一条线（生于—卒年，冷色分行）；只显示标了 multi 的事件。事件类型用形状区分。短标题同行避让；悬停或点击看全文与时年；点空白或 Esc 关闭。可横向拖动。标记不跳转。</p>
         <MultiTimeline lanes={multiLanes} />
       </section>
     )}
@@ -125,29 +90,9 @@ const recent = recentCommits(40)
     font-size: 40px;
     letter-spacing: 0.06em;
   }
-  .lede {
-    font-size: 20px;
-    max-width: 640px;
-    line-height: 1.8;
-  }
-  .home-cols {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: var(--gutter);
-    margin-top: calc(var(--u) * 6);
-  }
-  @media (max-width: 767px) {
-    .home-cols {
-      grid-template-columns: 1fr;
-    }
-  }
   .home-multi {
     margin-top: calc(var(--u) * 8);
     padding-top: calc(var(--u) * 4);
     border-top: 1px solid var(--rule);
-  }
-  .mtl-lede {
-    margin: 0 0 calc(var(--u) * 2);
-    max-width: 40rem;
   }
 </style>

@@ -21,10 +21,10 @@
   --p-secondary-text: #56664f;
   --p-ai-text: #6b655c;
 
-  /* 字体：正文思源宋、UI 思源黑；禁止 Songti / STSong / EB Garamond */
-  --font-serif: "Noto Serif SC", system-ui, "PingFang SC", "Microsoft YaHei", sans-serif;
+  /* 字体：拉丁 Source Serif 4 + 中文思源宋；UI 思源黑；禁止 Songti / STSong / EB Garamond */
+  --font-serif: "Source Serif 4", "Noto Serif SC", system-ui, "PingFang SC", "Microsoft YaHei", sans-serif;
   --font-sans: "Noto Sans SC", system-ui, "PingFang SC", "Microsoft YaHei", sans-serif;
-  --font-latin: "Noto Serif SC", system-ui, "PingFang SC", "Microsoft YaHei", sans-serif;
+  --font-latin: "Source Serif 4", "Noto Serif SC", system-ui, "PingFang SC", "Microsoft YaHei", sans-serif;
 
   /* 字号阶梯 */
   --fs-body: 18px;

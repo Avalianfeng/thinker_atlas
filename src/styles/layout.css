@@ -21,12 +21,6 @@
   letter-spacing: 0.04em;
   margin-right: auto;
 }
-.site-title .latin {
-  font-weight: 400;
-  color: var(--ink-2);
-  margin-left: 0.4em;
-  font-size: 15px;
-}
 .theme-toggle {
   font: inherit;
   color: var(--ink-2);
@@ -210,8 +204,5 @@
     padding: var(--u) calc(var(--u) * 2.5);
     gap: calc(var(--u) * 1.5);
     flex-wrap: nowrap;
-  }
-  .site-title .latin {
-    display: none;
   }
 }

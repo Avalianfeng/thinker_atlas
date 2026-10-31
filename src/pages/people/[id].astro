@@ -1,10 +1,12 @@
 ---
 import Base from '@layouts/Base.astro';
 import Portrait from '@components/Portrait.astro';
-import { getAtlas, lifespan, personUrl } from '@lib/atlas';
+import TimelineV from '@components/TimelineV.astro';
+import { getAtlas, lifespan } from '@lib/atlas';
 import { resolvePortrait, personSlug } from '@lib/portrait';
 import { mdToHtml } from '@lib/md';
 import { formatDay } from '@lib/git';
+import { loadPersonTimeline } from '@lib/timeline-yml';
 
 export async function getStaticPaths() {
   const atlas = await getAtlas();
@@ -25,6 +27,7 @@ const accents = ['#6E7F94', '#8B7355', '#5F7A6A', '#7A6A82', '#8A6E5C'];
 const accent = accents[seed % accents.length];
 const updated = atlas.updatedOf(person.id);
 const kindLabel: Record<string, string> = { life: '生平', work: '作品', note: '笔记', other: '其他' };
+const timeline = loadPersonTimeline(person.id);
 ---
 <Base title={t.name} accent={accent} description={t.intro}>
   <div class="page">
@@ -51,6 +54,11 @@ const kindLabel: Record<string, string> = { life: '生平', work: '作品', note
         <div class="prose" set:html={introHtml} />
       </div>
     )}
+
+    <section class="person-timeline" aria-label="个人时间线">
+      <h2 class="section-title">时间线</h2>
+      <TimelineV events={timeline} accent={accent} />
+    </section>
 
     {pieces.length > 0 && (
       <nav class="toc" aria-label="篇章">
@@ -108,6 +116,11 @@ const kindLabel: Record<string, string> = { life: '生平', work: '作品', note
     margin-top: calc(var(--u) * 2);
     max-width: 40rem;
     line-height: 1.75;
+  }
+  .person-timeline {
+    padding: calc(var(--u) * 2) 0 calc(var(--u) * 4);
+    border-bottom: 1px solid var(--rule);
+    margin-bottom: calc(var(--u) * 3);
   }
   .toc ol {
     list-style: decimal;

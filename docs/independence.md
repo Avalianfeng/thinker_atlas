@@ -1,4 +1,4 @@
-# Atlas 独立运行合同（v0.3）
+# Atlas 独立运行合同（v0.4）
 
 更新：2026-10-31
 
@@ -8,7 +8,7 @@
 2. **独立运行，无 SilverBullet 依赖。** 站点构建与浏览不要求 SB 可达。
 3. **无双向同步。** `npm run sync` 默认 no-op。
 4. **肖像用真图。** 文件放 `content/people/<id>/portrait.*` 或 `public/portraits/<id>.*`；无图才用字母 SVG 占位。
-5. **content v2：** 一人一夹、标准 Markdown；不做关系网、不做总时间线；不把 AI 新长文写入 `content/`。
+5. **content v2：** 一人一夹、标准 Markdown；个人 `timeline.yml` + 主页多人简略线（仅 `multi: true`）；不做关系网、不做 links；不把 AI 新长文写入 `content/`。
 
 ## 与旧草案的关系
 

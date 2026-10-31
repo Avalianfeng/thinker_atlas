@@ -1,12 +1,27 @@
 ---
 import Base from '@layouts/Base.astro';
 import Placard from '@components/Placard.astro';
+import MultiTimeline from '@components/MultiTimeline.astro';
 import { getAtlas, entityForFile, personUrl } from '@lib/atlas';
 import { recentCommits, formatDay } from '@lib/git';
+import { loadMultiLanes } from '@lib/timeline-yml';
 
 const atlas = await getAtlas();
 const joinOrder = atlas.people;
 const byYear = [...atlas.people].sort((a, b) => String(a.data.born ?? '').localeCompare(String(b.data.born ?? '')));
+const accents = ['#6E7F94', '#8B7355', '#5F7A6A', '#7A6A82', '#8A6E5C'];
+const accentOf = (name: string) => {
+  const seed = [...String(name)].reduce((a, c) => a + (c.codePointAt(0) ?? 0), 0);
+  return accents[seed % accents.length]!;
+};
+const multiLanes = loadMultiLanes(
+  atlas.people.map((p) => ({
+    id: p.id,
+    name: p.data.name,
+    order: p.data.order,
+    accent: accentOf(p.data.name),
+  })),
+);
 
 const recent = recentCommits(40)
   .flatMap((c) => c.files.map((f) => ({ file: f, date: c.date, subject: c.subject })))
@@ -58,9 +73,18 @@ const recent = recentCommits(40)
         <h2 class="section-title">从这里开始</h2>
         <ul class="listing">
           <li><a href={personUrl('wittgenstein')}>维特根斯坦</a><span class="meta">样例展厅</span></li>
+          <li><a href={personUrl('russell')}>罗素</a><span class="meta">多人线样例</span></li>
         </ul>
       </section>
     </div>
+
+    {multiLanes.length > 0 && (
+      <section class="home-multi" aria-label="多人时间线">
+        <h2 class="section-title">多人时间线</h2>
+        <p class="meta mtl-lede">各人一条线；只显示标了 multi 的事件。悬停看日期与标题；可横向拖动。圆点不跳转。</p>
+        <MultiTimeline lanes={multiLanes} />
+      </section>
+    )}
   </div>
 </Base>
 
@@ -107,5 +131,14 @@ const recent = recentCommits(40)
     .home-cols {
       grid-template-columns: 1fr;
     }
+  }
+  .home-multi {
+    margin-top: calc(var(--u) * 8);
+    padding-top: calc(var(--u) * 4);
+    border-top: 1px solid var(--rule);
+  }
+  .mtl-lede {
+    margin: 0 0 calc(var(--u) * 2);
+    max-width: 40rem;
   }
 </style>

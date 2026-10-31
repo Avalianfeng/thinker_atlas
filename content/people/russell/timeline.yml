@@ -1,0 +1,18 @@
+events:
+  - date: "1872-05-18"
+    title: 生于特雷莱克
+    kind: life
+    multi: true
+  - date: "1910"
+    to: "1913"
+    title: 《数学原理》陆续出版
+    kind: publish
+    multi: true
+  - date: "1911"
+    title: 维特根斯坦来到剑桥
+    kind: meet
+    multi: true
+  - date: "1970-02-02"
+    title: 逝世
+    kind: life
+    multi: true

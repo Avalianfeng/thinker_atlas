@@ -1,0 +1,22 @@
+---
+interface Props {
+  events: { date: string; to?: string; kind: string; title: string; place?: string; note?: string; source?: string }[];
+  accent?: string;
+}
+const { events, accent } = Astro.props;
+const sorted = [...events].sort((a, b) => String(a.date).localeCompare(String(b.date)));
+const when = (e: { date: string; to?: string }) => (e.to ? `${e.date}—${e.to}` : e.date);
+---
+<ol class="timeline-v" style={accent ? `--accent:${accent}` : undefined}>
+  {sorted.map((e) => (
+    <li class={`k-${e.kind}`}>
+      <div class="when num">{when(e)}</div>
+      <div class="what">
+        <span class="kind">{e.kind}</span>{e.title}
+        {e.place && <span class="detail">{e.place}</span>}
+        {e.note && <span class="detail">{e.note}</span>}
+        {e.source && <span class="detail">出处：{e.source}</span>}
+      </div>
+    </li>
+  ))}
+</ol>

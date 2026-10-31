@@ -1,0 +1,24 @@
+---
+interface Props {
+  name: string;
+  original?: string;
+  years: string;
+  accent: string;
+  src?: string;
+  class?: string;
+}
+const { name, original, years, accent, src, class: cls } = Astro.props;
+const initial = (original || name).trim().charAt(0);
+const seed = [...name].reduce((a, c) => a + c.codePointAt(0)!, 0);
+const rule = 40 + (seed % 40);
+---
+{src ? (
+  <img class:list={['portrait-img', cls]} src={src} alt={`${name} 肖像`} width="360" height="480" loading="lazy" style={`--accent:${accent}`} />
+) : (
+  <svg class:list={['portrait-svg', cls]} viewBox="0 0 300 400" role="img" aria-label={`${name} 肖像占位（单色字母）`} style={`--accent:${accent}`} preserveAspectRatio="xMidYMid slice">
+    <rect class="bg" width="300" height="400" />
+    <line class="rule" x1="24" y1={rule + 300} x2="276" y2={rule + 300} />
+    <text class="fg" x="150" y="215" text-anchor="middle" font-size="132" opacity="0.85">{initial}</text>
+    <text class="fg" x="150" y={rule + 292} text-anchor="middle" font-size="15" opacity="0.7" letter-spacing="2">{years}</text>
+  </svg>
+)}

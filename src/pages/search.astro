@@ -1,0 +1,68 @@
+---
+import Base from '@layouts/Base.astro';
+---
+<Base title="搜索" bodyClass="search-page">
+  <div class="page">
+    <h1>搜索</h1>
+    <p class="lede">全文检索由 Pagefind 提供，索引在 <code>npm run build</code> 时生成，支持中文分词。开发服务器下不可用。</p>
+    <div id="search-ui" class="search-ui">
+      <input id="search-input" type="search" placeholder="概念、人物、书名、术语……" autocomplete="off" aria-label="站内搜索" />
+      <div id="search-results" class="search-results" aria-live="polite"></div>
+    </div>
+  </div>
+</Base>
+
+<script>
+  const PAGEFIND_PATH = '/pagefind/pagefind.js';
+  const input = document.getElementById('search-input') as HTMLInputElement | null;
+  const results = document.getElementById('search-results') as HTMLElement | null;
+  let pagefind: any = null;
+  (async () => {
+    if (!input) return;
+    try {
+      pagefind = await import(/* @vite-ignore */ PAGEFIND_PATH);
+      await pagefind.options({ excerptLength: 60 });
+      await pagefind.init();
+      input.focus();
+    } catch {
+      input.placeholder = '搜索索引仅在构建后可用（npm run build）';
+    }
+  })();
+  let timer: number | undefined;
+  input?.addEventListener('input', () => {
+    clearTimeout(timer);
+    timer = window.setTimeout(async () => {
+      if (!pagefind || !results) return;
+      const q = input.value.trim();
+      if (!q) return (results.innerHTML = '');
+      const { results: rs } = await pagefind.search(q);
+      const items = await Promise.all(rs.slice(0, 30).map((r: any) => r.data()));
+      results.innerHTML = items.length
+        ? items
+            .map(
+              (d: any) =>
+                `<a class="result" href="${d.url}"><span class="rt">${d.meta.title || d.url}</span><span class="re">${d.excerpt}</span></a>`,
+            )
+            .join('')
+        : '<p class="meta">没有找到。</p>';
+    }, 160);
+  });
+</script>
+
+<style>
+  .lede {
+    font-size: 18px;
+    max-width: 640px;
+  }
+  .search-ui {
+    margin-top: calc(var(--u) * 4);
+    max-width: 760px;
+  }
+  .search-results {
+    border: 1px solid var(--rule);
+    border-top: 0;
+  }
+  .search-results:empty {
+    border: 0;
+  }
+</style>

@@ -1,0 +1,24 @@
+---
+import Base from '../layouts/Base.astro';
+import type { Atlas } from '../lib/atlas';
+
+interface Props {
+  atlas: Atlas;
+  thinker: any;
+  section?: string;
+  title: string;
+}
+const { thinker, title } = Astro.props;
+const t = thinker.data;
+const base = `/thinkers/${thinker.id.replace('atlas:', '')}`;
+---
+<Base title={`${title} · ${t.name.zh}`} accent={t.accent} description={t.intro}>
+  <div class="page">
+    <nav class="crumbs" aria-label="位置">
+      <span><a href="/">展厅</a></span>
+      <span><a href={base + '/'}>{t.name.zh}</a></span>
+      {title !== t.name.zh && <span>{title}</span>}
+    </nav>
+    <slot />
+  </div>
+</Base>

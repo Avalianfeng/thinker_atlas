@@ -1,0 +1,27 @@
+---
+import Base from '@layouts/Base.astro';
+import { getAtlas, journalRefs } from '@lib/atlas';
+
+const atlas = await getAtlas();
+const entries = [...atlas.journal].sort((a, b) => String(b.data.date ?? '').localeCompare(String(a.data.date ?? '')));
+---
+<Base title="随笔">
+  <div class="page">
+    <h1>随笔</h1>
+    <p class="lede">
+      <code>content/journal/</code> 里的思考随笔，与 SilverBullet 的 <code>atlas/</code> 文件夹双向同步。结构化的东西放在展厅里，这里存过程。
+    </p>
+    <ul class="listing journal">
+      {entries.map((j) => (
+        <li>
+          <a href={`/journal/${j.id}/`}>{j.data.title || j.id}</a>
+          <span class="meta num">{j.data.date ?? ''}</span>
+          <span class="meta">
+            {journalRefs(j).map((r) => (atlas.entities.has(r) ? atlas.ref(r).title : r)).join('、')}
+          </span>
+        </li>
+      ))}
+      {entries.length === 0 && <li class="meta">还没有随笔。运行 <code>npm run sync</code> 从 SilverBullet 的 atlas/ 拉取，或直接在 content/journal/ 里新建。</li>}
+    </ul>
+  </div>
+</Base>

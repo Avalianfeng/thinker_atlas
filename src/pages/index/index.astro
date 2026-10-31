@@ -1,0 +1,139 @@
+---
+import Base from '../../layouts/Base.astro';
+import { getAtlas, conceptUrl, workUrl } from '@lib/atlas';
+import { pinyin } from 'pinyin-pro';
+
+const atlas = await getAtlas();
+
+/** 分组键：西文取首字母；汉字取拼音首字母。 */
+const initialOf = (s: string) => {
+  const ch = (s || '').trim()[0] ?? '#';
+  if (/[a-z]/i.test(ch)) return ch.toUpperCase();
+  if (/[0-9]/.test(ch)) return '#';
+  const py = pinyin(ch, { pattern: 'first', toneType: 'none', type: 'array' })[0] ?? '#';
+  return py.toUpperCase();
+};
+const group = <T,>(
+  items: T[],
+  key: (x: T) => string,
+  label: (x: T) => string,
+  href: (x: T) => string,
+  kind: string,
+  sub?: (x: T) => string | undefined,
+) => {
+  const map = new Map<string, { label: string; href: string; kind: string; sub?: string | undefined }[]>();
+  for (const it of items) {
+    const k = key(it);
+    if (!map.has(k)) map.set(k, []);
+    map.get(k)!.push({ label: label(it), href: href(it), kind, sub: sub?.(it) });
+  }
+  return [...map.entries()]
+    .sort((a, b) => (a[0] === '#' ? 1 : b[0] === '#' ? -1 : a[0].localeCompare(b[0])))
+    .map(([letter, items]) => ({ letter, items: items.sort((a, b) => a.label.localeCompare(b.label, 'zh')) }));
+};
+
+const thinkers = group(
+  atlas.thinkers,
+  (t) => initialOf(t.data.name.zh),
+  (t) => t.data.name.zh,
+  (t) => `/thinkers/${t.id.replace('atlas:', '')}/`,
+  '人物',
+  (t) => t.data.name.original || t.data.name.en,
+);
+const concepts = group(
+  atlas.concepts,
+  (c) => initialOf(c.data.title),
+  (c) => c.data.title,
+  (c) => conceptUrl(c.id),
+  '概念',
+  (c) => atlas.entities.get(`atlas:${c.id.split('/')[0].replace('atlas:', '')}`)?.title,
+);
+const works = group(
+  atlas.works,
+  (w) => initialOf(w.data.original),
+  (w) => w.data.title,
+  (w) => workUrl(w.id),
+  '作品',
+  (w) => w.data.original,
+);
+const terms = atlas.concepts
+  .flatMap((c) => (c.data.terms ?? []).map((t) => ({ ...t, concept: c.data.title, url: conceptUrl(c.id) })))
+  .sort((a, b) => a.original.localeCompare(b.original, 'en'));
+const termGroups = group(
+  terms,
+  (t) => initialOf(t.original),
+  (t) => t.original,
+  (t) => t.url,
+  '术语',
+  (t) => t.zh,
+);
+---
+<Base title="索引">
+  <div class="page">
+    <h1>索引</h1>
+    <p class="lede">
+      按拼音首字母（人物、概念）与原文首字母（作品、术语）分组。页脚的搜索框做全文检索，这一页用来按名字找人。
+    </p>
+
+    <h2 class="section-title">人物（{atlas.thinkers.length}）</h2>
+    <div class="catalog">
+      {thinkers.map((g) => (
+        <div class="group">
+          <div class="letter">{g.letter}</div>
+          <ul>{g.items.map((i) => <li><a href={i.href}>{i.label}</a>{i.sub && <span class="k latin">{i.sub}</span>}</li>)}</ul>
+        </div>
+      ))}
+    </div>
+
+    <h2 class="section-title">概念（{atlas.concepts.length}）</h2>
+    <div class="catalog">
+      {concepts.map((g) => (
+        <div class="group">
+          <div class="letter">{g.letter}</div>
+          <ul>
+            {g.items.map((i) => (
+              <li><a href={i.href}>{i.label}</a>{i.sub && <span class="k">{i.sub}</span>}</li>
+            ))}
+          </ul>
+        </div>
+      ))}
+    </div>
+
+    <h2 class="section-title">作品（{atlas.works.length}）</h2>
+    <div class="catalog">
+      {works.map((g) => (
+        <div class="group">
+          <div class="letter">{g.letter}</div>
+          <ul>{g.items.map((i) => <li><a href={i.href}>{i.label}</a>{i.sub && <span class="k latin">{i.sub}</span>}</li>)}</ul>
+        </div>
+      ))}
+    </div>
+
+    <h2 class="section-title">术语（含原文，{terms.length}）</h2>
+    <table>
+      <thead><tr><th>原文</th><th>中文</th><th>所属概念</th></tr></thead>
+      <tbody>
+        {terms.map((t) => (
+          <tr>
+            <td lang={t.lang}>{t.original}</td>
+            <td>{t.zh}</td>
+            <td><a href={t.url}>{t.concept}</a></td>
+          </tr>
+        ))}
+        {terms.length === 0 && <tr><td colspan="3" class="meta">还没有登记术语。在概念文件的 frontmatter 里加 terms 即可。</td></tr>}
+      </tbody>
+    </table>
+    {termGroups.length > 0 && (
+      <p class="meta" style="margin-top:var(--u)">
+        术语按原文首字母分为 {termGroups.map((g) => g.letter).join('、')} 组。
+      </p>
+    )}
+  </div>
+</Base>
+
+<style>
+  .lede {
+    font-size: 20px;
+    max-width: 660px;
+  }
+</style>

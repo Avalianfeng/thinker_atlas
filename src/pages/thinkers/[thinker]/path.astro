@@ -1,0 +1,68 @@
+---
+import Mdx from '@components/Mdx.astro';
+import Hall from '@layouts/Hall.astro';
+import { getAtlas } from '@lib/atlas';
+
+export async function getStaticPaths() {
+  const atlas = await getAtlas();
+  return atlas.thinkers
+    .filter((t) => atlas.paths.has(t.id))
+    .map((t) => ({ params: { thinker: t.id.replace('atlas:', '') }, props: { thinkerId: t.id } }));
+}
+
+const atlas = await getAtlas();
+const thinker = atlas.thinker(Astro.props.thinkerId);
+const page = atlas.paths.get(thinker.id)!;
+
+const steps = page.data.steps;
+const done = steps.filter((s) => s.status === '完成').length;
+---
+<Hall atlas={atlas} thinker={thinker} title="学习路径">
+  <h1>学习路径</h1>
+  <p class="meta num">{done} / {steps.length} 步完成 · 状态直接写在 Markdown 的 frontmatter 里，改 `status` 与 `done` 即可</p>
+
+  <div class="essay">
+    <div class="prose">
+      <ol class="steps">
+        {steps.map((s) => (
+          <li>
+            <h3>{s.title}<span class={`status s-${s.status}`}>{s.status}</span></h3>
+            {s.goal && <p>{s.goal}</p>}
+            {s.read.length > 0 && (
+              <div class="read">
+                <span class="cell-label">读什么</span>
+                <ul>{s.read.map((r) => <li>{r}</li>)}</ul>
+              </div>
+            )}
+            {s.refs.length > 0 && (
+              <div class="read">
+                <span class="cell-label">本馆条目</span>
+                <ul>{s.refs.map((r) => <li><a href={atlas.ref(r).url}>{atlas.ref(r).title}</a></li>)}</ul>
+              </div>
+            )}
+            {s.checkpoints.length > 0 && (
+              <div class="read">
+                <span class="cell-label">检查点</span>
+                <ul class="checkpoints">
+                  {s.checkpoints.map((c) => <li class={c.done ? 'done' : ''}>{c.text}</li>)}
+                </ul>
+              </div>
+            )}
+          </li>
+        ))}
+      </ol>
+      <Mdx entry={page} />
+    </div>
+  </div>
+  <p><a href={`/thinkers/${Astro.props.thinkerId.replace('atlas:', '')}/`}>← 回到展厅</a></p>
+</Hall>
+
+<style>
+  .read {
+    margin-top: calc(var(--u) * 1.5);
+    font-size: 16px;
+  }
+  .read ul {
+    margin: 4px 0 0;
+  }
+</style>

@@ -1,0 +1,220 @@
+/* 版式网格：见方案 §6.2 */
+
+.site-header {
+  border-bottom: 1px solid var(--rule);
+  font-family: var(--font-sans);
+  font-size: var(--fs-small);
+  line-height: var(--lh-ui);
+}
+.site-header .inner {
+  max-width: var(--page-max);
+  margin: 0 auto;
+  padding: calc(var(--u) * 1.5) calc(var(--u) * 3);
+  display: flex;
+  align-items: center;
+  gap: calc(var(--u) * 3);
+  flex-wrap: wrap;
+}
+.site-title {
+  font-weight: 500;
+  text-decoration: none;
+  letter-spacing: 0.04em;
+  margin-right: auto;
+}
+.site-title .latin {
+  font-weight: 400;
+  color: var(--ink-2);
+  margin-left: 0.4em;
+  font-size: 15px;
+}
+.site-nav {
+  display: flex;
+  gap: calc(var(--u) * 2.5);
+  flex-wrap: wrap;
+}
+.site-nav a {
+  text-decoration: none;
+  color: var(--ink-2);
+}
+.site-nav a[aria-current='page'],
+.site-nav a:hover {
+  color: var(--ink);
+}
+.toggles {
+  display: flex;
+  gap: var(--u);
+}
+.toggle {
+  font: inherit;
+  font-size: var(--fs-tiny);
+  color: var(--ink-2);
+  background: transparent;
+  border: 1px solid var(--rule);
+  padding: 2px 8px;
+  cursor: pointer;
+  line-height: 1.6;
+}
+.toggle[aria-pressed='true'] {
+  color: var(--ink);
+  border-color: var(--ink-2);
+}
+
+.site-footer {
+  border-top: 1px solid var(--rule);
+  margin-top: calc(var(--u) * 12);
+  font-family: var(--font-sans);
+  font-size: var(--fs-tiny);
+  color: var(--ink-2);
+}
+.site-footer .inner {
+  max-width: var(--page-max);
+  margin: 0 auto;
+  padding: calc(var(--u) * 3);
+  display: flex;
+  gap: calc(var(--u) * 3);
+  flex-wrap: wrap;
+}
+
+/* 通用页面容器 */
+.page {
+  max-width: var(--page-max);
+  margin: 0 auto;
+  padding: calc(var(--u) * 6) calc(var(--u) * 3) 0;
+}
+.page-narrow {
+  max-width: calc(var(--col-text) + var(--col-side) + var(--gutter));
+}
+
+.crumbs {
+  font-family: var(--font-sans);
+  font-size: var(--fs-small);
+  color: var(--ink-2);
+  margin-bottom: calc(var(--u) * 3);
+}
+.crumbs a {
+  text-decoration: none;
+  color: var(--ink-2);
+}
+.crumbs a:hover {
+  color: var(--ink);
+}
+.crumbs span + span::before {
+  content: '／';
+  margin: 0 0.3em;
+  color: var(--rule);
+}
+
+.section-title {
+  font-family: var(--font-sans);
+  font-size: var(--fs-small);
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  color: var(--ink-2);
+  border-bottom: 1px solid var(--rule);
+  padding-bottom: var(--u);
+  margin: calc(var(--u) * 8) 0 calc(var(--u) * 3);
+}
+
+/* Essay 三栏：左目录 200 ｜ 正文 640 ｜ 右旁注 260，栏距 48 */
+.essay {
+  display: grid;
+  grid-template-columns: var(--col-toc) var(--col-text) var(--col-side);
+  column-gap: var(--gutter);
+  justify-content: center;
+  align-items: start;
+}
+.essay > .toc-side {
+  grid-column: 1;
+  position: sticky;
+  top: calc(var(--u) * 3);
+  max-height: calc(100vh - var(--u) * 6);
+  overflow: auto;
+}
+.essay > .toc-bar {
+  display: none;
+}
+.essay > .prose,
+.essay > .wide {
+  grid-column: 2;
+  min-width: 0;
+}
+.essay > .full {
+  grid-column: 2 / 4;
+}
+
+.toc {
+  font-family: var(--font-sans);
+  font-size: var(--fs-small);
+  line-height: var(--lh-ui);
+}
+.toc ol {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.toc li {
+  margin: 0 0 var(--u);
+}
+.toc li.depth-3 {
+  padding-left: 1em;
+}
+.toc a {
+  text-decoration: none;
+  color: var(--ink-2);
+}
+.toc a:hover {
+  color: var(--ink);
+}
+.toc-title {
+  font-size: var(--fs-tiny);
+  letter-spacing: 0.12em;
+  color: var(--ink-2);
+  margin-bottom: var(--u);
+}
+
+/* 中屏：目录收为顶部可展开条，旁注改为可点开标记 */
+@media (max-width: 1199px) {
+  .essay {
+    grid-template-columns: minmax(0, var(--col-text));
+  }
+  .essay > .toc-side {
+    display: none;
+  }
+  .essay > .toc-bar {
+    display: block;
+    grid-column: 1;
+    border-top: 1px solid var(--rule);
+    border-bottom: 1px solid var(--rule);
+    padding: var(--u) 0;
+    margin-bottom: calc(var(--u) * 4);
+  }
+  .essay > .toc-bar summary {
+    font-family: var(--font-sans);
+    font-size: var(--fs-small);
+    color: var(--ink-2);
+  }
+  .essay > .toc-bar summary::after {
+    content: ' ▾';
+  }
+  .essay > .toc-bar[open] .toc {
+    padding-top: var(--u);
+  }
+  .essay > .prose,
+  .essay > .wide,
+  .essay > .full {
+    grid-column: 1;
+  }
+}
+
+@media (max-width: 767px) {
+  .page {
+    padding: calc(var(--u) * 4) calc(var(--u) * 2.5) 0;
+  }
+  .site-header .inner {
+    padding: var(--u) calc(var(--u) * 2.5);
+    gap: calc(var(--u) * 1.5);
+  }
+  .site-title {
+    width: 100%;
+  }
+}

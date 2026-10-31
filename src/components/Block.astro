@@ -1,0 +1,30 @@
+---
+import { PROVENANCE_LABEL, type Provenance } from '../lib/provenance';
+import { sbPageUrl } from '../lib/env';
+
+interface Props {
+  from?: Provenance;
+  source?: string;
+  /** own-discussed：SilverBullet 里讨论记录的页面路径 */
+  discussion?: string;
+  /** 同步自 SilverBullet 的块：原页面路径 */
+  sb?: string;
+}
+const { from = 'own', source, discussion, sb } = Astro.props;
+if ((from === 'transcribed' || from === 'secondary') && !source) {
+  throw new Error(`<Block from="${from}"> 必须带 source（书名、版本、页码）`);
+}
+const label = PROVENANCE_LABEL[from] ?? from;
+const discussionUrl = sbPageUrl(discussion);
+const sbUrl = sbPageUrl(sb);
+const tip = [source, discussion && `讨论记录：${discussion}`].filter(Boolean).join(' · ') || undefined;
+---
+<div class="block" data-from={from}>
+  {discussionUrl ? (
+    <a class="ptag" href={discussionUrl} data-source={tip}>{label}</a>
+  ) : (
+    <span class="ptag" tabindex={tip ? 0 : undefined} data-source={tip}>{label}</span>
+  )}
+  {sb && (sbUrl ? <a class="sb-mark ptag" href={sbUrl} data-source={`SilverBullet：${sb}`}>笔记</a> : <span class="sb-mark ptag" tabindex="0" data-source={`SilverBullet：${sb}`}>笔记</span>)}
+  <slot />
+</div>

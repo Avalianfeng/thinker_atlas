@@ -1,0 +1,7 @@
+---
+interface Props {
+  inline?: boolean;
+}
+const { inline = false } = Astro.props;
+---
+{inline ? <span class="todo-inline">（待写：<slot />）</span> : <div class="todo"><slot /></div>}

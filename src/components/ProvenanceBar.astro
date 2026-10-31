@@ -1,0 +1,25 @@
+---
+import type { ProvenanceStats } from '../lib/provenance';
+interface Props {
+  stats: ProvenanceStats;
+  compact?: boolean;
+}
+const { stats, compact = false } = Astro.props;
+const segs = [
+  { k: 'own', label: '自己的', v: stats.own },
+  { k: 'original', label: '原典', v: stats.original },
+  { k: 'secondary', label: '二手', v: stats.secondary },
+  { k: 'ai', label: 'AI 摘录', v: stats.ai },
+];
+const pct = (v: number) => (stats.total ? Math.round((v / stats.total) * 100) : 0);
+---
+<div class="pbar" aria-label="来源占比">
+  {!compact && <span>来源占比</span>}
+  <div class="bar" role="img" aria-label={segs.map((s) => `${s.label} ${pct(s.v)}%`).join('，')}>
+    {segs.map((s) => s.v > 0 && <span class={`seg-${s.k}`} style={`width:${(s.v / stats.total) * 100}%`} />)}
+  </div>
+  <div class="legend">
+    {segs.map((s) => <span><i class={`seg-${s.k}`} />{s.label} {pct(s.v)}%</span>)}
+    {stats.todo > 0 && <span>待写 {stats.todo} 处</span>}
+  </div>
+</div>

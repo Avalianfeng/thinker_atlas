@@ -1,10 +1,12 @@
 ---
 import Base from '@layouts/Base.astro';
 import Placard from '@components/Placard.astro';
+import Portrait from '@components/Portrait.astro';
 import MultiTimeline from '@components/MultiTimeline.astro';
-import { getAtlas } from '@lib/atlas';
+import { getAtlas, personUrl } from '@lib/atlas';
 import { loadMultiLanes } from '@lib/timeline-yml';
 import { accentMapForPeople, type AccentPerson } from '@lib/accents';
+import { resolvePortrait, personSlug } from '@lib/portrait';
 
 const atlas = await getAtlas();
 /** 展厅墙默认按出生年排；无出生年靠后，同岁按 name 稳定排 */
@@ -33,6 +35,20 @@ const multiLanes = loadMultiLanes(
     died: p.data.died ? String(p.data.died) : undefined,
   })),
 );
+
+/** 首页肖像墙：按出生年，带解析后的 src */
+const wallTiles = byBorn.map((p) => {
+  const slug = personSlug(p.id);
+  const t = p.data;
+  return {
+    id: p.id,
+    name: t.name as string,
+    nameEn: (t.name_en as string) || '',
+    url: personUrl(p.id),
+    src: resolvePortrait(slug, t.portrait as string | undefined),
+    accent: accentById.get(p.id)!,
+  };
+});
 ---
 <Base title="展厅墙" description="私人思想展馆">
   <script is:inline>
@@ -42,8 +58,35 @@ const multiLanes = loadMultiLanes(
     })();
   </script>
   <div class="page">
-    <section class="wall-hero">
-      <h1>思想的展厅</h1>
+    <section class="wall-hero" aria-label="肖像墙">
+      <div class="portrait-wall" data-hero-wall>
+        <ul class="portrait-wall-grid">
+          {wallTiles.map((tile, i) => (
+            <li>
+              <a
+                class:list={['portrait-wall-tile', { 'is-active': i === 0 }]}
+                href={tile.url}
+                style={`--accent:${tile.accent}`}
+                data-tile={i}
+                aria-label={tile.name}
+              >
+                <Portrait
+                  class="portrait"
+                  name={tile.name}
+                  original={tile.nameEn || tile.name}
+                  accent={tile.accent}
+                  src={tile.src}
+                  showYears={false}
+                />
+                <span class="portrait-wall-cap">
+                  <span class="zh">{tile.name}</span>
+                  {tile.nameEn && <span class="latin orig">{tile.nameEn}</span>}
+                </span>
+              </a>
+            </li>
+          ))}
+        </ul>
+      </div>
     </section>
 
     <div class="view-switch">
@@ -80,13 +123,82 @@ const multiLanes = loadMultiLanes(
 
 <style>
   .wall-hero {
-    padding: calc(var(--u) * 4) 0 calc(var(--u) * 5);
+    padding: calc(var(--u) * 2) 0 calc(var(--u) * 4);
     border-bottom: 1px solid var(--rule);
     margin-bottom: calc(var(--u) * 4);
   }
-  .wall-hero h1 {
-    font-size: 40px;
-    letter-spacing: 0.06em;
+  .portrait-wall-grid {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: calc(var(--u) * 2);
+  }
+  .portrait-wall-tile {
+    --accent: var(--ink-2);
+    display: flex;
+    flex-direction: column;
+    text-decoration: none;
+    color: inherit;
+    border-top: 3px solid transparent;
+    opacity: 0.62;
+    transition:
+      opacity 1.2s ease,
+      border-color 1.2s ease,
+      background var(--dur) ease;
+  }
+  .portrait-wall-tile.is-active {
+    opacity: 1;
+    border-top-color: var(--accent);
+  }
+  .portrait-wall-tile:hover,
+  .portrait-wall-tile:focus-visible {
+    opacity: 1;
+    background: var(--paper-2);
+  }
+  .portrait-wall-tile:focus-visible {
+    outline: 2px solid var(--ink-2);
+    outline-offset: 2px;
+  }
+  .portrait-wall-tile :global(.portrait),
+  .portrait-wall-tile :global(.portrait-img),
+  .portrait-wall-tile :global(.portrait-svg) {
+    display: block;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 3 / 4;
+    object-fit: cover;
+  }
+  .portrait-wall-cap {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: calc(var(--u) * 1.25) calc(var(--u) * 0.5) calc(var(--u) * 0.5);
+  }
+  .portrait-wall-cap .zh {
+    font-family: var(--font-serif);
+    font-weight: 500;
+    font-size: var(--fs-h4);
+    line-height: 1.35;
+  }
+  .portrait-wall-cap .orig {
+    font-family: var(--font-latin);
+    font-size: var(--fs-small);
+    color: var(--ink-2);
+    line-height: 1.35;
+  }
+  @media (min-width: 640px) {
+    .portrait-wall-grid {
+      grid-template-columns: repeat(auto-fit, minmax(200px, 280px));
+      justify-content: start;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .portrait-wall-tile {
+      opacity: 1;
+      transition: none;
+    }
   }
   .home-multi {
     margin-top: calc(var(--u) * 8);

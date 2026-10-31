@@ -1,4 +1,4 @@
-// 前端交互：亮暗主题 + 展厅墙视图。状态存 localStorage。
+// 前端交互：亮暗主题 + 展厅墙视图 + 首页肖像墙轻量轮播。状态存 localStorage。
 const root = document.documentElement;
 
 function initTheme() {
@@ -47,9 +47,58 @@ function initWallView() {
   });
 }
 
+/** 首页肖像墙：同批肖像轻量自动轮播（淡入强调当前格）；尊重 reduced-motion。 */
+function initHeroWall() {
+  const wall = document.querySelector<HTMLElement>('[data-hero-wall]');
+  if (!wall) return;
+  const tiles = [...wall.querySelectorAll<HTMLElement>('.portrait-wall-tile')];
+  if (tiles.length < 2) {
+    tiles[0]?.classList.add('is-active');
+    return;
+  }
+
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (reduce) {
+    for (const t of tiles) t.classList.add('is-active');
+    return;
+  }
+
+  let i = tiles.findIndex((t) => t.classList.contains('is-active'));
+  if (i < 0) i = 0;
+
+  const show = (next: number) => {
+    tiles.forEach((t, idx) => t.classList.toggle('is-active', idx === next));
+    i = next;
+  };
+  show(i);
+
+  const INTERVAL_MS = 5200;
+  let timer = window.setInterval(() => show((i + 1) % tiles.length), INTERVAL_MS);
+
+  const pause = () => {
+    window.clearInterval(timer);
+  };
+  const resume = () => {
+    window.clearInterval(timer);
+    timer = window.setInterval(() => show((i + 1) % tiles.length), INTERVAL_MS);
+  };
+
+  wall.addEventListener('mouseenter', pause);
+  wall.addEventListener('mouseleave', resume);
+  wall.addEventListener('focusin', pause);
+  wall.addEventListener('focusout', (e) => {
+    if (!wall.contains(e.relatedTarget as Node | null)) resume();
+  });
+
+  for (const [idx, tile] of tiles.entries()) {
+    tile.addEventListener('pointerenter', () => show(idx));
+  }
+}
+
 function init() {
   initTheme();
   initWallView();
+  initHeroWall();
 }
 
 if (document.readyState !== 'loading') init();

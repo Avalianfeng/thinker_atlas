@@ -1,58 +1,176 @@
 ---
-import { scale, tickYears, BANDS } from '../lib/timeline';
-import { thinkerUrl, yearOf } from '../lib/atlas';
+/**
+ * 主页底部多人横向时间线。
+ * - 每行一人；横轴时间；悬停显示 date+title（+人名）
+ * - 可横向拖/滑；点击圆点不跳转
+ * - 无人 multi 事件时由调用方隐藏本组件
+ */
+import { scale, tickYears } from '@lib/timeline';
+import { yearOf } from '@lib/ids';
+import { formatEventWhen, multiYearSpan, type TimelineLane } from '@lib/timeline-yml';
+
 interface Props {
-  lanes: { thinker: any; events: { date: string; kind: string; title: string }[] }[];
+  lanes: TimelineLane[];
 }
 const { lanes } = Astro.props;
-const W = 960;
-const padL = 120;
+const span = multiYearSpan(lanes, 3);
+const empty = !span || lanes.length === 0;
+
+const PX_PER_YEAR = 14;
+const padL = 8;
 const padR = 24;
-const laneH = 76;
-const top = 64;
-const H = top + laneH * lanes.length + 30;
-const allYears = [
-  ...lanes.flatMap((l) => [yearOf(l.thinker.data.born.date)!, yearOf(l.thinker.data.died?.date) ?? 2000]),
-  ...BANDS.flatMap((b) => [b.from, b.to]),
-];
-const from = Math.min(...allYears) - 4;
-const to = Math.max(...allYears, 2026) + 2;
-const x = scale(from, to, padL, W - padR);
-const ticks = tickYears(from, to, 10);
----
-<svg class="mtl" viewBox={`0 0 ${W} ${H}`} role="img" aria-label="多人并置时间线，叠加历史背景">
-  {BANDS.map((b) => (
-    <g>
-      <rect class="band" x={x(b.from)} y="24" width={Math.max(3, x(b.to) - x(b.from))} height={H - 48} />
-      <text class="band-label" x={(x(b.from) + x(b.to)) / 2} y="18" text-anchor="middle">{b.label}</text>
-    </g>
-  ))}
-  <line class="axis" x1={padL} y1={H - 24} x2={W - padR} y2={H - 24} />
-  {ticks.map((y) => (
-    <text x={x(y)} y={H - 8} text-anchor="middle">{y}</text>
-  ))}
-  {lanes.map((l, i) => {
+const laneH = 56;
+const top = 36;
+const bottom = 28;
+const W = empty ? 400 : Math.max(640, Math.round((span!.to - span!.from) * PX_PER_YEAR) + padL + padR);
+const H = top + laneH * Math.max(lanes.length, 1) + bottom;
+const x = empty ? ((_y: number) => 0) : scale(span!.from, span!.to, padL, W - padR);
+const ticks = empty ? [] : tickYears(span!.from, span!.to, 10);
+
+type Pt = { cx: number; cy: number; when: string; title: string; person: string; kind: string };
+const points: Pt[] = [];
+if (!empty) {
+  lanes.forEach((lane, i) => {
     const cy = top + i * laneH + laneH / 2;
-    const born = yearOf(l.thinker.data.born.date)!;
-    const died = yearOf(l.thinker.data.died?.date) ?? 2026;
-    return (
-      <g>
-        <a href={thinkerUrl(l.thinker.id)}>
-          <text class="lane-name" x={padL - 12} y={cy + 4} text-anchor="end">{l.thinker.data.name.zh}</text>
-        </a>
-        <line class="lane-line" x1={x(born)} y1={cy} x2={x(died)} y2={cy} stroke={l.thinker.data.accent} stroke-width="2.5" />
-        {l.events
-          .filter((e) => e.kind !== '生活')
-          .map((e) => {
-            const y = Number(e.date.slice(0, 4));
+    for (const e of lane.events) {
+      const y = yearOf(e.date);
+      if (y === undefined) continue;
+      points.push({
+        cx: Math.round(x(y) * 100) / 100,
+        cy,
+        when: formatEventWhen(e),
+        title: e.title,
+        person: lane.name,
+        kind: e.kind,
+      });
+    }
+  });
+}
+---
+{empty ? (
+  <p class="meta mtl-empty">暂无多人事件（需在 timeline.yml 中设 multi: true）。</p>
+) : (
+  <div class="mtl-block" data-mtl>
+    <div class="mtl-frame">
+      <ul class="mtl-names" aria-hidden="true">
+        {lanes.map((lane) => (
+          <li style={`--accent:${lane.accent}`}>
+            <span class="dot" />
+            <span class="name">{lane.name}</span>
+          </li>
+        ))}
+      </ul>
+      <div class="mtl-scroll" data-mtl-scroll tabindex="0" role="region" aria-label="多人时间线，可横向拖动或滚动">
+        <svg class="mtl" viewBox={`0 0 ${W} ${H}`} width={W} height={H} role="img" aria-label="多人并置时间线">
+          <line class="axis" x1={padL} y1={H - bottom + 4} x2={W - padR} y2={H - bottom + 4} />
+          {ticks.map((y) => (
+            <g>
+              <line class="tick" x1={x(y)} y1={H - bottom} x2={x(y)} y2={H - bottom + 8} />
+              <text x={x(y)} y={H - 4} text-anchor="middle">{y}</text>
+            </g>
+          ))}
+          {lanes.map((lane, i) => {
+            const cy = top + i * laneH + laneH / 2;
+            const years = lane.events.map((e) => yearOf(e.date)!).filter((n) => Number.isFinite(n));
+            const x0 = years.length ? x(Math.min(...years)) : padL;
+            const x1 = years.length ? x(Math.max(...years)) : padL;
             return (
-              <g>
-                <title>{`${e.date} ${e.title}`}</title>
-                <circle class="ev" cx={x(y)} cy={cy} r="3" fill={e.kind === '历史背景' ? 'var(--paper)' : l.thinker.data.accent} />
+              <g data-lane={lane.personId}>
+                <line class="lane-line" x1={x0} y1={cy} x2={x1} y2={cy} style={`stroke:${lane.accent}`} />
               </g>
             );
           })}
-      </g>
-    );
-  })}
-</svg>
+          {points.map((p) => (
+            <circle
+              class={`ev k-${p.kind}`}
+              cx={p.cx}
+              cy={p.cy}
+              r="4"
+              data-when={p.when}
+              data-title={p.title}
+              data-person={p.person}
+              tabindex="0"
+              role="img"
+              aria-label={`${p.person} ${p.when} ${p.title}`}
+            />
+          ))}
+        </svg>
+      </div>
+    </div>
+    <div class="mtl-tip" data-mtl-tip hidden></div>
+  </div>
+)}
+
+<script>
+  function bind(root: HTMLElement) {
+    const scroll = root.querySelector<HTMLElement>('[data-mtl-scroll]');
+    const tip = root.querySelector<HTMLElement>('[data-mtl-tip]');
+    if (!scroll || !tip) return;
+
+    let dragging = false;
+    let startX = 0;
+    let startLeft = 0;
+
+    const onDown = (e: PointerEvent) => {
+      if ((e.target as Element).closest('circle.ev')) return;
+      dragging = true;
+      startX = e.clientX;
+      startLeft = scroll.scrollLeft;
+      scroll.setPointerCapture(e.pointerId);
+      scroll.classList.add('dragging');
+    };
+    const onMove = (e: PointerEvent) => {
+      if (!dragging) return;
+      scroll.scrollLeft = startLeft - (e.clientX - startX);
+    };
+    const onUp = (e: PointerEvent) => {
+      if (!dragging) return;
+      dragging = false;
+      scroll.classList.remove('dragging');
+      try {
+        scroll.releasePointerCapture(e.pointerId);
+      } catch {
+        /* ignore */
+      }
+    };
+    scroll.addEventListener('pointerdown', onDown);
+    scroll.addEventListener('pointermove', onMove);
+    scroll.addEventListener('pointerup', onUp);
+    scroll.addEventListener('pointercancel', onUp);
+
+    const show = (el: SVGCircleElement, clientX: number, clientY: number) => {
+      const when = el.dataset.when ?? '';
+      const title = el.dataset.title ?? '';
+      const person = el.dataset.person ?? '';
+      tip.hidden = false;
+      tip.textContent = `${person} · ${when} · ${title}`;
+      const rect = root.getBoundingClientRect();
+      tip.style.left = `${Math.min(rect.width - 12, Math.max(12, clientX - rect.left))}px`;
+      tip.style.top = `${Math.max(8, clientY - rect.top - 12)}px`;
+    };
+    const hide = () => {
+      tip.hidden = true;
+    };
+
+    root.querySelectorAll<SVGCircleElement>('circle.ev').forEach((el) => {
+      el.addEventListener('pointerenter', (e) => show(el, e.clientX, e.clientY));
+      el.addEventListener('pointermove', (e) => show(el, e.clientX, e.clientY));
+      el.addEventListener('pointerleave', hide);
+      el.addEventListener('focus', () => {
+        const r = el.getBoundingClientRect();
+        const br = root.getBoundingClientRect();
+        show(el, r.left + r.width / 2, r.top);
+        tip.style.left = `${r.left - br.left + r.width / 2}px`;
+        tip.style.top = `${Math.max(8, r.top - br.top - 12)}px`;
+      });
+      el.addEventListener('blur', hide);
+      // Aeris：点击圆点不进入人物页
+      el.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+      });
+    });
+  }
+
+  document.querySelectorAll<HTMLElement>('[data-mtl]').forEach(bind);
+</script>

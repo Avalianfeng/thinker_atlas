@@ -1,0 +1,31 @@
+events:
+  - date: "1889-04-26"
+    title: 生于维也纳
+    kind: life
+    multi: true
+  - date: "1911"
+    title: 赴剑桥，随罗素学习
+    kind: meet
+    multi: true
+  - date: "1914"
+    to: "1918"
+    title: 一战服役
+    kind: life
+  - date: "1921"
+    title: 《逻辑哲学论》出版
+    kind: publish
+    multi: true
+  - date: "1929"
+    title: 重返剑桥
+    kind: life
+  - date: "1939"
+    title: 任剑桥哲学教授
+    kind: life
+    multi: true
+  - date: "1945"
+    title: 《哲学研究》手稿成形
+    kind: write
+  - date: "1951-04-29"
+    title: 逝于剑桥
+    kind: life
+    multi: true

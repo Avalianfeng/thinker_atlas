@@ -1,22 +1,26 @@
 ---
+import { KIND_LABEL, formatEventWhen, type TimelineEvent } from '@lib/timeline-yml';
+
 interface Props {
-  events: { date: string; to?: string; kind: string; title: string; place?: string; note?: string; source?: string }[];
+  events: TimelineEvent[];
   accent?: string;
 }
 const { events, accent } = Astro.props;
-const sorted = [...events].sort((a, b) => String(a.date).localeCompare(String(b.date)));
-const when = (e: { date: string; to?: string }) => (e.to ? `${e.date}—${e.to}` : e.date);
+const sorted = [...events].sort((a, b) => a.date.localeCompare(b.date));
 ---
-<ol class="timeline-v" style={accent ? `--accent:${accent}` : undefined}>
-  {sorted.map((e) => (
-    <li class={`k-${e.kind}`}>
-      <div class="when num">{when(e)}</div>
-      <div class="what">
-        <span class="kind">{e.kind}</span>{e.title}
-        {e.place && <span class="detail">{e.place}</span>}
-        {e.note && <span class="detail">{e.note}</span>}
-        {e.source && <span class="detail">出处：{e.source}</span>}
-      </div>
-    </li>
-  ))}
-</ol>
+{sorted.length > 0 ? (
+  <ol class="timeline-v" style={accent ? `--accent:${accent}` : undefined}>
+    {sorted.map((e) => (
+      <li class={`k-${e.kind}`}>
+        <div class="when num">{formatEventWhen(e)}</div>
+        <div class="what">
+          <span class="kind">{KIND_LABEL[e.kind] ?? e.kind}</span>
+          {e.title}
+          {e.multi && <span class="detail multi-tag">多人线</span>}
+        </div>
+      </li>
+    ))}
+  </ol>
+) : (
+  <p class="meta">暂无时间线条目。可在本人物夹加入 <code>timeline.yml</code>。</p>
+)}

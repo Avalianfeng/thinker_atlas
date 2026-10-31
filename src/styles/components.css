@@ -439,13 +439,23 @@ a.prop:hover {
   background: var(--paper);
   border: 1px solid var(--ink-2);
 }
+.timeline-v li.k-publish::before,
 .timeline-v li.k-出版::before {
   background: var(--accent, var(--ink-2));
   border-color: var(--accent, var(--ink-2));
 }
+.timeline-v li.k-write::before {
+  border-color: var(--accent, var(--ink-2));
+}
+.timeline-v li.k-meet::before {
+  background: var(--ink-2);
+  border-color: var(--ink-2);
+}
+.timeline-v li.k-context,
 .timeline-v li.k-历史背景 {
   color: var(--ink-2);
 }
+.timeline-v li.k-context::before,
 .timeline-v li.k-历史背景::before {
   border-color: var(--rule);
 }
@@ -474,6 +484,13 @@ a.prop:hover {
   color: var(--ink-2);
   line-height: var(--lh-ui);
   margin-top: 2px;
+}
+.timeline-v .detail.multi-tag {
+  display: inline;
+  margin-left: 0.5em;
+  border: 1px solid var(--rule);
+  padding: 0 4px;
+  font-size: var(--fs-tiny);
 }
 
 /* ---------- 关系条目 Relation ---------- */
@@ -1000,16 +1017,105 @@ body:has(#sort-year:checked) .wall-cell {
 }
 .mtl .lane-line {
   stroke: var(--rule);
+  stroke-width: 1.5;
+  opacity: 0.85;
+}
+.mtl .tick {
+  stroke: var(--rule);
 }
 .mtl .ev {
+  fill: var(--ink-2);
   stroke: var(--paper);
   stroke-width: 1;
+  cursor: default;
+}
+.mtl .ev.k-publish {
+  fill: var(--accent, var(--ink));
+}
+.mtl .ev.k-context {
+  fill: var(--paper);
+  stroke: var(--rule);
 }
 .mtl .ev-label {
   font-size: 10.5px;
 }
-.mtl a:hover .lane-name {
-  text-decoration: underline;
+
+.mtl-block {
+  position: relative;
+  margin: calc(var(--u) * 2) 0;
+}
+.mtl-frame {
+  display: grid;
+  grid-template-columns: minmax(7rem, 10rem) 1fr;
+  gap: calc(var(--u) * 2);
+  align-items: stretch;
+}
+.mtl-names {
+  list-style: none;
+  margin: 0;
+  padding: 36px 0 28px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+}
+.mtl-names li {
+  height: 56px;
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+  font-family: var(--font-sans);
+  font-size: var(--fs-small);
+  color: var(--ink);
+}
+.mtl-names .dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent, var(--ink-2));
+  flex: 0 0 auto;
+}
+.mtl-names .name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.mtl-scroll {
+  overflow-x: auto;
+  overflow-y: hidden;
+  cursor: grab;
+  border: 1px solid var(--rule);
+  background: var(--paper);
+  -webkit-overflow-scrolling: touch;
+}
+.mtl-scroll.dragging {
+  cursor: grabbing;
+  user-select: none;
+}
+.mtl-scroll .mtl {
+  width: auto;
+  max-width: none;
+  min-width: 100%;
+  height: auto;
+  display: block;
+}
+.mtl-tip {
+  position: absolute;
+  transform: translate(-50%, -100%);
+  pointer-events: none;
+  z-index: 5;
+  font-family: var(--font-sans);
+  font-size: var(--fs-small);
+  line-height: 1.4;
+  color: var(--ink);
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  padding: 6px 10px;
+  max-width: min(22rem, 80vw);
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--ink) 8%, transparent);
+  white-space: nowrap;
+}
+.mtl-empty {
+  margin: var(--u) 0;
 }
 
 .scroll-x {

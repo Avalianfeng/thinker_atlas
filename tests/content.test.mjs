@@ -76,4 +76,9 @@ describe('content v2 自检', () => {
     expect(files.some((f) => /^portrait\./i.test(f))).toBe(true);
     expect(files.some((f) => f.endsWith('.md') && f !== 'index.md')).toBe(true);
   });
+
+  it('有 timeline.yml 的人物文件可被枚举（样例维氏）', async () => {
+    const files = await readdir(path.join(peopleRoot, 'wittgenstein'));
+    expect(files).toContain('timeline.yml');
+  });
 });

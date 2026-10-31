@@ -25,12 +25,46 @@
 | `npm run deploy` / `publish` | 本机 rsync（需 `.env`）；CI 另见 workflow |
 | `npm run sync` | **默认禁用**；勿当日常工作流 |
 
+## 如何添加一位人物
+
+任务说「加某某」或「新建人物」时按此做；**长文须人确认后再写入**，脚手架与字段壳可以先开。
+
+1. **定 id**：小写 + 连字符，与夹名相同（如 `feyerabend`）。已存在则停，勿覆盖。
+2. **脚手架**：`npm run new <id>` → `content/people/<id>/index.md` + `01-导读.md`。
+3. **改 `index.md` frontmatter**（必需除非注明）：
+   - `id`（= 夹名）、`name`、`order`、`intro`
+   - 建议：`born` / `died`（日期加引号）、`name_en`、`portrait: ./portrait.jpg`、`visibility`（默认 `private`）
+4. **真图**：把肖像放同目录 `portrait.jpg`（或 `photo.*` / `照片.*`）；无图才字母占位。也可放 `public/portraits/<id>.*`。构建前 `sync-portraits` 会复制。
+5. **篇章**：`01-….md`、`02-….md`…；frontmatter 必有 `title`、`kind`（`life` \| `work` \| `note` \| `other`）。正文 CommonMark/GFM；图用相对路径 `![说明](./xxx.png)`。**不要** MDX、不要 `<Block>` 等自定义标签。
+6. **可选 `timeline.yml`**：
+   ```yaml
+   events:
+     - date: "1889-04-26"
+       title: 短标题
+       # to: "1908"
+       # kind: life   # life|write|publish|meet|context
+       # multi: true  # 只有 true 才进主页多人线
+   ```
+   不要加 `with` / 关系边 / `links.yml`。
+7. **自检**：`npm test` && `npm run build`。夹名与 `id` 不一致、缺必需字段会失败。
+8. **开 PR**；等合并指示。不要擅自把未确认传记当定稿入库。
+
+参考样例：`content/people/wittgenstein/`、`content/people/russell/`。
+
+## 如何改已有人物
+
+- 改展牌文案 / 生卒 / intro → 只动该人 `index.md`。
+- 加篇 → 新 `NN-短名.md`，勿改别人的 id 夹名。
+- 补时间线 → 只编辑该人 `timeline.yml`；主页多人线只认 `multi: true`。
+- 换肖像 → 替换 `portrait.*` 并确认 frontmatter；有图时 UI 必须藏字母 fallback。
+- **禁止**：新建 `relations/`、总时间线页、往 content 塞 SB 草稿、AI 臆造长文。
+
 ## 内容边界（硬）
 
 - **写**：`content/people/<id>/` 下标准 MD + YAML（`index.md`、`01-….md`、可选 `timeline.yml`、图）。
-- **不写进 content/**：AI 新生长文、SB 随笔/讨论草稿、关系边、`links.yml`、MDX、自定义组件标签。
+- **不写进 content/**：AI 未确认的新生长文、SB 随笔/讨论草稿、关系边、`links.yml`、MDX、自定义组件标签。
 - **不做**（本版）：人物关系网、独立总时间线页、站内编辑器、SB 双向。
-- 样例人物仅够渲染；扩内容须人确认后再入库。
+- 样例人物仅够渲染；扩写须人点头。
 
 ## 目录与读侧
 

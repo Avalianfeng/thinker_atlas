@@ -1,0 +1,138 @@
+---
+import Base from '@layouts/Base.astro';
+import Portrait from '@components/Portrait.astro';
+import { getAtlas, lifespan, personUrl } from '@lib/atlas';
+import { resolvePortrait, personSlug } from '@lib/portrait';
+import { mdToHtml } from '@lib/md';
+import { formatDay } from '@lib/git';
+
+export async function getStaticPaths() {
+  const atlas = await getAtlas();
+  return atlas.people.map((p) => ({ params: { id: p.id }, props: { personId: p.id } }));
+}
+
+const atlas = await getAtlas();
+const person = atlas.person(Astro.props.personId);
+const t = person.data;
+const slug = personSlug(person.id);
+const years = lifespan(person);
+const pieces = atlas.piecesOf(person.id);
+const portraitSrc = resolvePortrait(slug, t.portrait);
+const assetBase = `/people/${slug}`;
+const introHtml = mdToHtml(person.body, { assetBase });
+const seed = [...String(t.name)].reduce((a: number, c: string) => a + c.codePointAt(0)!, 0);
+const accents = ['#6E7F94', '#8B7355', '#5F7A6A', '#7A6A82', '#8A6E5C'];
+const accent = accents[seed % accents.length];
+const updated = atlas.updatedOf(person.id);
+const kindLabel: Record<string, string> = { life: '生平', work: '作品', note: '笔记', other: '其他' };
+---
+<Base title={t.name} accent={accent} description={t.intro}>
+  <div class="page">
+    <nav class="crumbs" aria-label="位置">
+      <span><a href="/">展厅</a></span>
+      <span>{t.name}</span>
+    </nav>
+
+    <header class="person-head">
+      <Portrait class="portrait" name={t.name} original={t.name_en || t.name} years={years} accent={accent} src={portraitSrc} />
+      <div>
+        <h1>{t.name}</h1>
+        {t.name_en && <div class="orig">{t.name_en}</div>}
+        <div class="facts num">
+          <span>{years}</span>
+          {updated && <span>最后修改 {formatDay(updated)}</span>}
+        </div>
+        <p class="intro">{t.intro}</p>
+      </div>
+    </header>
+
+    {introHtml && (
+      <div class="essay">
+        <div class="prose" set:html={introHtml} />
+      </div>
+    )}
+
+    {pieces.length > 0 && (
+      <nav class="toc" aria-label="篇章">
+        <h2 class="section-title">篇章</h2>
+        <ol>
+          {pieces.map((piece) => {
+            const anchor = piece.id.split('/').pop()!;
+            return (
+              <li>
+                <a href={`#${anchor}`}>{piece.data.title}</a>
+                <span class="meta">{kindLabel[piece.data.kind] ?? piece.data.kind}</span>
+              </li>
+            );
+          })}
+        </ol>
+      </nav>
+    )}
+
+    {pieces.map((piece) => {
+      const anchor = piece.id.split('/').pop()!;
+      const html = mdToHtml(piece.body, { assetBase });
+      return (
+        <article class="piece" id={anchor}>
+          <h2>{piece.data.title}</h2>
+          <p class="meta">{kindLabel[piece.data.kind] ?? piece.data.kind}</p>
+          {html ? <div class="prose" set:html={html} /> : null}
+        </article>
+      );
+    })}
+  </div>
+</Base>
+
+<style>
+  .person-head {
+    display: grid;
+    grid-template-columns: 160px 1fr;
+    gap: calc(var(--u) * 3);
+    padding: calc(var(--u) * 3) 0;
+    border-bottom: 1px solid var(--rule);
+    margin-bottom: calc(var(--u) * 4);
+  }
+  .person-head :global(.portrait),
+  .person-head :global(.portrait-img),
+  .person-head :global(.portrait-svg) {
+    width: 160px;
+    height: auto;
+    aspect-ratio: 3 / 4;
+    object-fit: cover;
+  }
+  .person-head h1 {
+    font-size: 36px;
+    letter-spacing: 0.04em;
+  }
+  .intro {
+    margin-top: calc(var(--u) * 2);
+    max-width: 40rem;
+    line-height: 1.75;
+  }
+  .toc ol {
+    list-style: decimal;
+    padding-left: 1.5rem;
+  }
+  .toc li {
+    margin: 0.35rem 0;
+  }
+  .piece {
+    padding: calc(var(--u) * 4) 0;
+    border-top: 1px solid var(--rule);
+  }
+  .piece h2 {
+    font-size: 28px;
+  }
+  .prose :global(img) {
+    max-width: min(100%, 360px);
+    height: auto;
+    display: block;
+    margin: 1rem 0;
+    border: 1px solid var(--rule);
+  }
+  @media (max-width: 640px) {
+    .person-head {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

@@ -1,18 +1,9 @@
-# 人物肖像（真图）
+# 肖像目录
 
-把真图放到这里，文件名用人物 slug：
+运行时由 `npm run sync:portraits`（`predev` / `prebuild`）从 `content/people/<id>/portrait.*`（也认 `photo.*` / `照片.*`）复制到这里：`public/portraits/<id>.<ext>`。
 
-- `wittgenstein.jpg`
-- `jung.png`
-- `lukacs.webp`
+也可直接把真图放到本目录。人物卡 frontmatter 写 `portrait: ./portrait.jpg` 或 `/portraits/<id>.jpg`。
 
-也支持把图放在 `content/thinkers/<slug>/portrait.jpg`（或 `photo.*` / `照片.*`），构建前 `npm run sync:portraits`（已挂在 `predev` / `prebuild`）会复制到本目录。
+正文相对图会复制到 `public/people/<id>/`。
 
-然后在 `content/thinkers/<slug>/index.mdx` 写：
-
-```yaml
-portrait: /portraits/wittgenstein.jpg
-```
-
-若 frontmatter 省略 `portrait`，但本目录已有 `<slug>.*`，页面会自动选用。  
-**没有真图时**才用字母 SVG 占位——不要把 SVG 当作正式肖像。
+**无真图时**页面才用字母 SVG 占位——不要把 SVG 当正式肖像。

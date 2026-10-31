@@ -1,11 +1,11 @@
 # 思想者图谱（Thinker's Atlas）
 
-一个**只给自己看**的思想展馆：每位人物一间展厅，沿着设计好的路径进入他的思想。纯静态站，**展馆真源 = git `content/`**，独立运行，**不依赖 SilverBullet**。内容以 Markdown + YAML 存在仓库里，逐段标注来源；构建时同时输出只读 JSON 接口。
+一个**只给自己看**的思想展馆：每位人物一间展厅，沿着设计好的路径进入他的思想。纯静态站，**展馆真源 = git `content/people/`**，独立运行，**不依赖 SilverBullet**。内容以 Markdown + YAML 存在仓库里，逐段标注来源；构建时同时输出只读 JSON 接口。
 
-- 站点：Astro 7 + Content Collections + MDX，Zod 在构建时校验字段
+- 站点：Astro 7 + Content Collections；内容为标准 Markdown（GFM），Zod 在构建时校验字段
 - 前端 JS：只有顶栏日月主题切换，其余全是静态 HTML
 - 私有：服务器 basic auth；`/api/` 另用 Bearer token；全站 `noindex`
-- 肖像：**真图优先**（`public/portraits/<slug>.*` 或 `content/thinkers/<slug>/portrait.*`）；无图才用字母占位
+- 肖像：**真图优先**（`public/portraits/<slug>.*` 或 `content/people/<id>/portrait.*`）；无图才用字母占位
 
 合同摘要见 [`docs/independence.md`](docs/independence.md)。内容字段见 [`docs/content-format.md`](docs/content-format.md)。
 
@@ -37,33 +37,21 @@ npm test          # 单元测试与内容自检
 npm run new feyerabend
 ```
 
-会在 `content/thinkers/feyerabend/` 生成骨架。然后：
+会在 `content/people/feyerabend/` 生成 `index.md` + `01-导读.md`。然后：
 
-1. 改 `index.mdx`：姓名、生卒、领域、**强调色**、`maturity`、`periods`。
-2. **上传真图**：把照片存为 `content/thinkers/<slug>/portrait.jpg`（构建时复制到 `public/portraits/`），或直接放到 `public/portraits/<slug>.jpg`；在 frontmatter 写 `portrait: /portraits/<slug>.jpg`。没有真图时页面用字母占位。
-3. 在 `life.mdx` 的 `events` 里加时间线事件。
-4. 概念写到 `thought/<slug>.mdx`，作品写到 `works/<slug>.mdx`。**ID 一旦定下就不要改**。
-5. 关系（可选，暂不扩做）：`content/relations/<a>--<b>.mdx`。
+1. 改 `index.md`：`id`（=夹名）、`name`、`born`/`died`、`order`、`intro`、`portrait`。
+2. **上传真图**：`content/people/<id>/portrait.jpg`（或 `public/portraits/<id>.jpg`）；frontmatter 写 `portrait: ./portrait.jpg`。无图才用字母占位。
+3. 追加篇章：`02-….md` 等，frontmatter 含 `title`、`kind`（`life`|`work`|`note`|`other`）。
+4. 正文用标准 Markdown；图片 `![说明](./xxx.png)`。**不要** MDX / 自定义组件。
+5. 关系与总时间线：暂不做。
 
-### 2. 写作时怎么标来源
+详见 [`docs/content-format.md`](docs/content-format.md)（v2）。
 
-正文默认就是「自己的」。需要标注时用组件：
+### 2. 写作约定
 
-```mdx
-<Block from="transcribed" source="《逻辑哲学论》5.6">
-我的语言的界限意味着我的世界的界限。
-</Block>
-
-<Quote prop="5.6" source="《逻辑哲学论》5.6" original="Die Grenzen meiner Sprache..." lang="de" translator="暂译，待核">
-我的语言的界限意味着我的世界的界限。
-</Quote>
-
-<Note title="我的疑问">这一步是不是走得太快？</Note>
-<Todo>这里还没写；页面上会显示为「待写」，不会混进正文。</Todo>
-```
-
-- `transcribed` 与 `secondary` **必须**带 `source`，否则构建直接报错。
-- 不确定时写 `<Todo>` 或「暂译，待核」，**不要猜**。
+- 引文用 `>` 块引用 + 出处行。
+- 来源写在段末括号或引用脚。
+- AI **不**直接写长文入库。
 
 ### 3. 构建与发布
 
@@ -87,10 +75,10 @@ npm run publish   # build + deploy
 
 ```
 content/
-  thinkers/<slug>/{index,life,afterlife,path}.mdx
-  thinkers/<slug>/thought/*.mdx
-  thinkers/<slug>/works/*.mdx
-  thinkers/<slug>/portrait.jpg   可选真图（构建复制到 public/portraits/）
+  people/<id>/{index,life,afterlife,path}.mdx
+  people/<id>/thought/*.mdx
+  people/<id>/works/*.mdx
+  people/<id>/portrait.jpg   可选真图（构建复制到 public/portraits/）
   relations/<a>--<b>.mdx
   journal/            可选本地随笔（非 SB 工作流）
   sb-cache/           遗留缓存，可空

@@ -1,25 +1,28 @@
 ---
 import Portrait from './Portrait.astro';
-import Maturity from './Maturity.astro';
-import { lifespan, thinkerUrl } from '../lib/atlas';
-import { resolvePortrait, thinkerSlug } from '../lib/portrait';
+import { lifespan, personUrl } from '../lib/atlas';
+import { resolvePortrait, personSlug } from '../lib/portrait';
 interface Props {
-  thinker: any;
+  person: any;
   index: number;
   mini?: boolean;
 }
-const { thinker, index, mini = false } = Astro.props;
-const t = thinker.data;
-const years = lifespan(thinker);
-const portraitSrc = resolvePortrait(thinkerSlug(thinker.id), t.portrait);
+const { person, index, mini = false } = Astro.props;
+const t = person.data;
+const years = lifespan(person);
+const slug = personSlug(person.id);
+const portraitSrc = resolvePortrait(slug, t.portrait);
+const seed = [...String(t.name)].reduce((a: number, c: string) => a + c.codePointAt(0)!, 0);
+const accents = ['#6E7F94', '#8B7355', '#5F7A6A', '#7A6A82', '#8A6E5C'];
+const accent = accents[seed % accents.length];
+const en = t.name_en || '';
 ---
-<a class:list={['placard', { mini }]} href={thinkerUrl(thinker.id)} style={`--accent:${t.accent};--o-join:${index};--o-year:${t.born.date}`}>
-  <Portrait class="portrait" name={t.name.zh} original={t.name.original || t.name.en} years={years} accent={t.accent} src={portraitSrc} />
+<a class:list={['placard', { mini }]} href={personUrl(person.id)} style={`--accent:${accent};--o-join:${index};--o-year:${t.born || 0}`}>
+  <Portrait class="portrait" name={t.name} original={en || t.name} years={years} accent={accent} src={portraitSrc} />
   <div class="body">
-    <div class="zh">{t.name.zh}</div>
-    {!mini && <div class="orig">{t.name.original || t.name.en}</div>}
-    <div class="years num">{years}{t.fields.length ? ` · ${t.fields.join('、')}` : ''}</div>
+    <div class="zh">{t.name}</div>
+    {!mini && en && <div class="orig">{en}</div>}
+    <div class="years num">{years}</div>
     {!mini && <p class="intro">{t.intro}</p>}
-    <Maturity level={t.maturity} />
   </div>
 </a>

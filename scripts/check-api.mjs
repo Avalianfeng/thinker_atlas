@@ -7,9 +7,10 @@ import { fileURLToPath } from 'node:url';
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const dist = path.join(root, 'dist', 'api');
 const required = [
-  'v1/index.json', 'v1/thinkers.json', 'v1/concepts.json', 'v1/relations.json',
-  'v1/timeline.json', 'v1/graph.json', 'v1/journal.json',
-  'public/index.json', 'public/thinkers.json', 'public/concepts.json',
+  'v1/index.json',
+  'v1/people.json',
+  'public/index.json',
+  'public/people.json',
 ];
 const errors = [];
 for (const f of required) {
@@ -20,7 +21,7 @@ for (const f of required) {
   }
 }
 async function walk(dir, acc = []) {
-  for (const e of await readdir(dir, { withFileTypes: true })) {
+  for (const e of await readdir(dir, { withFileTypes: true }).catch(() => [])) {
     const p = path.join(dir, e.name);
     if (e.isDirectory()) await walk(p, acc);
     else if (e.name.endsWith('.json')) acc.push(p);
@@ -28,18 +29,29 @@ async function walk(dir, acc = []) {
   return acc;
 }
 const all = await walk(path.join(root, 'dist', 'api'));
-// 随笔 ID 用文件名（可能含中文），其余实体一律 ASCII slug
-const idRe = /^atlas:(journal\/)?[^\s]+$/;
+const idRe = /^[a-z0-9]+(?:-[a-z0-9]+)*(?:\/[^/\s]+)?$/;
 for (const f of all) {
   let d;
-  try { d = JSON.parse(await readFile(f, 'utf8')); } catch { errors.push(`无法解析 ${f}`); continue; }
+  try {
+    d = JSON.parse(await readFile(f, 'utf8'));
+  } catch {
+    errors.push(`无法解析 ${f}`);
+    continue;
+  }
   const check = (o) => {
-    if (o && typeof o === 'object' && o.id && typeof o.id === 'string' && !idRe.test(o.id)) errors.push(`${path.relative(dist, f)}: ID 不合规 ${o.id}`);
+    if (o && typeof o === 'object' && o.id && typeof o.id === 'string' && o.kind === 'person' && !idRe.test(o.id)) {
+      errors.push(`${path.relative(dist, f)}: ID 不合规 ${o.id}`);
+    }
   };
-  for (const key of ['thinkers', 'concepts', 'relations', 'journal']) if (Array.isArray(d[key])) d[key].forEach(check);
+  if (Array.isArray(d.people)) d.people.forEach(check);
   check(d);
-  if (f.includes('/public/') && JSON.stringify(d).includes('"visibility":"private"')) errors.push(`${path.relative(dist, f)}: public 子集里出现 private 条目`);
+  if (f.includes('/public/') && JSON.stringify(d).includes('"visibility":"private"')) {
+    errors.push(`${path.relative(dist, f)}: public 子集里出现 private 条目`);
+  }
 }
 console.log(`API 自检：${all.length} 个 JSON 文件`);
-if (errors.length) { console.error(errors.join('\n')); process.exit(1); }
+if (errors.length) {
+  console.error(errors.join('\n'));
+  process.exit(1);
+}
 console.log('通过。');

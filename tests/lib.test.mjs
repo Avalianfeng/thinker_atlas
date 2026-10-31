@@ -75,8 +75,8 @@ describe('批注提取', () => {
 
 describe('ID 与年代', () => {
   it('解析 atlas 稳定 ID', () => {
-    expect(parseId('atlas:wittgenstein')).toEqual({ thinker: 'wittgenstein', item: undefined });
-    expect(parseId('atlas:wittgenstein/language-games')).toEqual({ thinker: 'wittgenstein', item: 'language-games' });
+    expect(parseId('atlas:wittgenstein')).toEqual({ thinker: 'wittgenstein', person: 'wittgenstein', item: undefined });
+    expect(parseId('atlas:wittgenstein/language-games')).toEqual({ thinker: 'wittgenstein', person: 'wittgenstein', item: 'language-games' });
   });
   it('接受 SilverBullet 里的简写', () => {
     expect(normalizeRef('wittgenstein/language-games')).toBe('atlas:wittgenstein/language-games');
@@ -92,5 +92,8 @@ describe('ID 与年代', () => {
   it('生卒年用破折号', () => {
     const t = { data: { born: { date: '1889-04-26' }, died: { date: '1951-04-29' } } };
     expect(lifespan(t)).toBe('1889—1951');
+  });
+  it('生卒年接受 v2 扁平字段', () => {
+    expect(lifespan({ data: { born: '1889-04-26', died: '1951-04-29' } })).toBe('1889—1951');
   });
 });

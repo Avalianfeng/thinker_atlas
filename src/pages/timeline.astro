@@ -49,7 +49,7 @@ const axisY = top + Math.max(1, dated.length) * rowH + 4;
             <line class="life" x1={start} y1={y} x2={end} y2={y} />
             <circle class="dot" cx={start} cy={y} r="2.2" />
             {p.died && <circle class="dot" cx={end} cy={y} r="2.2" />}
-            <text class="span" x={end + 12} y={y + 4}>{p.died ? `—${p.died}` : '—'}</text>
+            <text class="span" x={end + 12} y={y + 4}>{p.died ? `${p.born}—${p.died}` : `${p.born}—`}</text>
           </g>
         );
       })}

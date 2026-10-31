@@ -1,5 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 500" role="img" aria-label="–Ï`M">
-  <!-- :‹þGÁ‡ö9Ì„þG«Ÿ76ï(øùï„(b`êñ„gGsï -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 500" role="img" aria-label="placeholder portrait">
+  <!-- sample image: proves images inside the folder are copied through and can be referenced relatively -->
   <rect width="400" height="500" fill="#eceae7"/>
   <circle cx="200" cy="190" r="72" fill="none" stroke="#a8a29a" stroke-width="2"/>
   <path d="M96 420c0-62 46-104 104-104s104 42 104 104" fill="none" stroke="#a8a29a" stroke-width="2"/>

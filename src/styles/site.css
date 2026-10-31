@@ -142,6 +142,7 @@ p {
 .card .photo {
   display: block;
   width: 100%;
+  height: auto;
   aspect-ratio: 4 / 5;
   object-fit: cover;
   filter: grayscale(1);
@@ -178,6 +179,7 @@ p {
 }
 .head .photo {
   width: 200px;
+  height: auto;
   aspect-ratio: 4 / 5;
   object-fit: cover;
   filter: grayscale(1);

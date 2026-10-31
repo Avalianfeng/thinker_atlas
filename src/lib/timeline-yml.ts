@@ -23,6 +23,10 @@ export interface TimelineLane {
   name: string;
   order: number;
   accent: string;
+  /** index.md born；寿命条与轴跨度用 */
+  born?: string;
+  /** index.md died；缺省视为在世（轴用「至今」年） */
+  died?: string;
   events: TimelineEvent[];
 }
 
@@ -90,24 +94,75 @@ export function loadPersonTimeline(personId: string, root = process.cwd()): Time
   return parseTimelineYaml(fs.readFileSync(file, 'utf8'), `people/${personId}/timeline.yml`);
 }
 
+export type MultiLanePerson = {
+  id: string;
+  name: string;
+  order: number;
+  accent: string;
+  born?: string;
+  died?: string;
+};
+
 /** 每人一行：只含 multi:true 事件；无人 multi 则返回空数组。 */
-export function loadMultiLanes(
-  people: { id: string; name: string; order: number; accent: string }[],
-  root = process.cwd(),
-): TimelineLane[] {
+export function loadMultiLanes(people: MultiLanePerson[], root = process.cwd()): TimelineLane[] {
   const lanes: TimelineLane[] = [];
   for (const p of [...people].sort((a, b) => a.order - b.order)) {
     const events = loadPersonTimeline(p.id, root).filter((e) => e.multi);
     if (!events.length) continue;
-    lanes.push({ personId: p.id, name: p.name, order: p.order, accent: p.accent, events });
+    lanes.push({
+      personId: p.id,
+      name: p.name,
+      order: p.order,
+      accent: p.accent,
+      born: p.born,
+      died: p.died,
+      events,
+    });
   }
   return lanes;
 }
 
-/** 全体 multi 事件的年份跨度（含 to），加 pad。 */
-export function multiYearSpan(lanes: TimelineLane[], pad = 2): { from: number; to: number } | null {
+/** 当前年（寿命条「至今」、轴上界）；可注入便于测。 */
+export function currentYear(now = new Date()): number {
+  return now.getFullYear();
+}
+
+/**
+ * 一行寿命条端点：有 born → born…died|至今；无 born → 回退事件年跨度。
+ * 返回年份；无任何可用年则 null。
+ */
+export function laneLifeSpan(
+  lane: Pick<TimelineLane, 'born' | 'died' | 'events'>,
+  nowYear = currentYear(),
+): { from: number; to: number } | null {
+  const bornY = yearOf(lane.born);
+  const diedY = yearOf(lane.died);
+  if (bornY !== undefined) {
+    return { from: bornY, to: diedY !== undefined ? diedY : nowYear };
+  }
+  const years: number[] = [];
+  for (const e of lane.events) {
+    const y = yearOf(e.date);
+    if (y !== undefined) years.push(y);
+    const t = yearOf(e.to);
+    if (t !== undefined) years.push(t);
+  }
+  if (!years.length) return null;
+  return { from: Math.min(...years), to: Math.max(...years) };
+}
+
+/** 全体 born/died ∪ multi 事件年的跨度，加 pad。 */
+export function multiYearSpan(
+  lanes: TimelineLane[],
+  pad = 2,
+  nowYear = currentYear(),
+): { from: number; to: number } | null {
   const years: number[] = [];
   for (const lane of lanes) {
+    const life = laneLifeSpan(lane, nowYear);
+    if (life) {
+      years.push(life.from, life.to);
+    }
     for (const e of lane.events) {
       const y = yearOf(e.date);
       if (y !== undefined) years.push(y);
@@ -129,4 +184,86 @@ export function shortTitle(title: string, max = 6): string {
   if (chars.length <= max) return chars.join('');
   if (max <= 1) return '…';
   return chars.slice(0, max - 1).join('') + '…';
+}
+
+/** 事件年 − 出生年；有 born 才返回。 */
+export function ageAtEvent(born: string | undefined, eventDate: string): number | undefined {
+  const b = yearOf(born);
+  const y = yearOf(eventDate);
+  if (b === undefined || y === undefined) return undefined;
+  return y - b;
+}
+
+/** 估短标题像素宽：CJK≈字号，其余≈0.55×字号。 */
+export function estimateLabelWidth(text: string, fontSize = 10): number {
+  let w = 0;
+  for (const ch of String(text)) {
+    const cp = ch.codePointAt(0) ?? 0;
+    const cjk =
+      (cp >= 0x2e80 && cp <= 0x9fff) ||
+      (cp >= 0xf900 && cp <= 0xfaff) ||
+      (cp >= 0xff00 && cp <= 0xffef) ||
+      (cp >= 0x3400 && cp <= 0x4dbf) ||
+      cp === 0x2026; /* … */
+    w += cjk ? fontSize : fontSize * 0.55;
+  }
+  return w;
+}
+
+export type LabelPlacement = {
+  /** 是否画短标题；false 则仅圆点（全文仍靠 tip） */
+  show: boolean;
+  /** 相对圆点 cy 的文字基线偏移（正=下） */
+  dy: number;
+  /** 是否画细虚线引回圆点（非默认下方时） */
+  leader: boolean;
+};
+
+const DEFAULT_DY = 16;
+const STACK_STEP = 12;
+/** 行高 ~72 → 约 1–2 层：默认下 + 上 + 各一栈 */
+const CANDIDATE_DYS = [DEFAULT_DY, -DEFAULT_DY, DEFAULT_DY + STACK_STEP, -(DEFAULT_DY + STACK_STEP)];
+
+type Placed = { cx: number; halfW: number; dy: number };
+
+function overlaps(a: Placed, b: Placed, pad = 4): boolean {
+  if (Math.abs(a.dy - b.dy) >= STACK_STEP - 1) return false;
+  return Math.abs(a.cx - b.cx) < a.halfW + b.halfW + pad;
+}
+
+/**
+ * 同行短标题避让：按时间扫；冲突则上/下交替或栈偏；超层则省略短标。
+ * 不引入 Labella / vis-timeline。
+ */
+export function layoutLaneLabels(
+  items: { cx: number; short: string }[],
+  fontSize = 10,
+): LabelPlacement[] {
+  const indexed = items.map((it, i) => ({ ...it, i, halfW: estimateLabelWidth(it.short, fontSize) / 2 }));
+  indexed.sort((a, b) => a.cx - b.cx || a.i - b.i);
+
+  const placed: Placed[] = [];
+  const out: LabelPlacement[] = items.map(() => ({ show: false, dy: DEFAULT_DY, leader: false }));
+
+  for (const it of indexed) {
+    let chosen: number | null = null;
+    for (const dy of CANDIDATE_DYS) {
+      const cand: Placed = { cx: it.cx, halfW: it.halfW, dy };
+      if (placed.every((p) => !overlaps(cand, p))) {
+        chosen = dy;
+        break;
+      }
+    }
+    if (chosen === null) {
+      out[it.i] = { show: false, dy: DEFAULT_DY, leader: false };
+      continue;
+    }
+    placed.push({ cx: it.cx, halfW: it.halfW, dy: chosen });
+    out[it.i] = {
+      show: true,
+      dy: chosen,
+      leader: chosen !== DEFAULT_DY,
+    };
+  }
+  return out;
 }

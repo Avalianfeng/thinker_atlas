@@ -28,6 +28,8 @@ const multiLanes = loadMultiLanes(
     name: p.data.name,
     order: p.data.order,
     accent: accentOf(p.data.name),
+    born: p.data.born ? String(p.data.born) : undefined,
+    died: p.data.died ? String(p.data.died) : undefined,
   })),
 );
 
@@ -91,7 +93,7 @@ const recent = recentCommits(40)
     {multiLanes.length > 0 && (
       <section class="home-multi" aria-label="多人时间线">
         <h2 class="section-title">多人时间线</h2>
-        <p class="meta mtl-lede">各人一条线；只显示标了 multi 的事件。圆点旁常显短标题；悬停或点击看全文；点空白或 Esc 关闭。可横向拖动。圆点不跳转。</p>
+        <p class="meta mtl-lede">各人一条线（生于—卒年）；只显示标了 multi 的事件。短标题同行避让；悬停或点击看全文与时年；点空白或 Esc 关闭。可横向拖动。圆点不跳转。</p>
         <MultiTimeline lanes={multiLanes} />
       </section>
     )}

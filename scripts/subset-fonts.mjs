@@ -9,9 +9,10 @@
 import { readFile, writeFile, readdir, mkdir, rm } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import subsetFont from 'subset-font';
 
-const root = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..');
+const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const fs = (p) => path.join(root, p);
 const OUT_DIR = fs('public/fonts');
 const CSS_OUT = fs('src/styles/fonts.css');

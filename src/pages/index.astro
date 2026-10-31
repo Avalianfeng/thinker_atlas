@@ -1,14 +1,12 @@
 ---
 import Base from '@layouts/Base.astro';
 import Placard from '@components/Placard.astro';
-import GraphMap from '@components/GraphMap.astro';
-import { getAtlas, entityForFile, thinkerUrl } from '@lib/atlas';
+import { getAtlas, entityForFile, personUrl } from '@lib/atlas';
 import { recentCommits, formatDay } from '@lib/git';
-import { addStats, emptyStats } from '@lib/provenance';
 
 const atlas = await getAtlas();
-const joinOrder = atlas.thinkers;
-const byYear = [...atlas.thinkers].sort((a, b) => String(a.data.born.date).localeCompare(String(b.data.born.date)));
+const joinOrder = atlas.people;
+const byYear = [...atlas.people].sort((a, b) => String(a.data.born ?? '').localeCompare(String(b.data.born ?? '')));
 
 const recent = recentCommits(40)
   .flatMap((c) => c.files.map((f) => ({ file: f, date: c.date, subject: c.subject })))
@@ -16,21 +14,15 @@ const recent = recentCommits(40)
   .filter((r) => r.entity)
   .filter((r, i, arr) => arr.findIndex((x) => x.entity!.id === r.entity!.id) === i)
   .slice(0, 6);
-
-let total = emptyStats();
-for (const t of atlas.thinkers) total = addStats(total, atlas.statsOf(t.id));
 ---
-<Base title="展厅墙" description="私人思想展馆：人物的生平、思想、作品、身后与谱系">
+<Base title="展厅墙" description="私人思想展馆：一人一夹，标准 Markdown">
   <div class="page">
     <section class="wall-hero">
       <h1>思想的展厅</h1>
       <p class="lede">
-        每个人物是一间展厅，沿着设计好的路径进入他的思想。页面如实显示成熟度与来源占比——写到哪里，就是哪里。
+        每个人物是一间展厅。内容在 git 的 <code>content/people/</code>，标准 Markdown，独立构建。
       </p>
-      <p class="meta">
-        目前 {atlas.thinkers.length} 位人物 · {atlas.concepts.length} 个概念 · {atlas.works.length} 部作品 ·
-        {atlas.relations.length} 条关系 · 已写 {(total.own + total.original + total.secondary + total.ai).toLocaleString('zh-CN')} 字
-      </p>
+      <p class="meta">目前 {atlas.people.length} 位人物 · {atlas.pieces.length} 篇正文</p>
     </section>
 
     <div class="sorter">
@@ -42,18 +34,12 @@ for (const t of atlas.thinkers) total = addStats(total, atlas.statsOf(t.id));
     </div>
 
     <section class="wall" aria-label="人物展牌">
-      {joinOrder.map((t, i) => (
-        <div style={`--o-join:${i};--o-year:${byYear.findIndex((x) => x.id === t.id)}`} class="wall-cell">
-          <Placard thinker={t} index={i} />
+      {joinOrder.map((p, i) => (
+        <div style={`--o-join:${i};--o-year:${byYear.findIndex((x) => x.id === p.id)}`} class="wall-cell">
+          <Placard person={p} index={i} />
         </div>
       ))}
     </section>
-
-    <h2 class="section-title">谱系缩略</h2>
-    <div class="graph-wrap">
-      <GraphMap thinkers={atlas.thinkers} relations={atlas.relations} atlas={atlas} mini />
-    </div>
-    <p class="meta"><a href="/genealogy/">看完整谱系与全部关系条目 →</a></p>
 
     <div class="home-cols">
       <section>
@@ -71,10 +57,7 @@ for (const t of atlas.thinkers) total = addStats(total, atlas.statsOf(t.id));
       <section>
         <h2 class="section-title">从这里开始</h2>
         <ul class="listing">
-          <li><a href={thinkerUrl('atlas:wittgenstein')}>维特根斯坦</a><span class="meta">生长中 · 第一个展厅</span></li>
-          <li><a href="/timeline/">总时间线</a><span class="meta">多人并置，历史背景带</span></li>
-          <li><a href="/index/">索引</a><span class="meta">人物、概念、作品、术语</span></li>
-          <li><a href="/api/v1/thinkers.json">JSON 接口</a><span class="meta">只读，v1</span></li>
+          <li><a href={personUrl('wittgenstein')}>维特根斯坦</a><span class="meta">样例展厅</span></li>
         </ul>
       </section>
     </div>
@@ -113,11 +96,6 @@ for (const t of atlas.thinkers) total = addStats(total, atlas.statsOf(t.id));
     .wall-cell {
       flex-basis: 100%;
     }
-  }
-  .graph-wrap {
-    border: 1px solid var(--rule);
-    padding: calc(var(--u) * 2);
-    overflow-x: auto;
   }
   .home-cols {
     display: grid;

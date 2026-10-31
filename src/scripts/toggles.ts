@@ -22,29 +22,29 @@ function initTheme() {
 }
 
 function initWallView() {
-  const buttons = Array.from(document.querySelectorAll<HTMLButtonElement>('.view-btn[data-wall-view]'));
-  if (buttons.length === 0) return;
+  const btn = document.getElementById('tg-wall-view') as HTMLButtonElement | null;
+  if (!btn) return;
 
   const sync = (view: 'detail' | 'cards') => {
     root.dataset.wallView = view;
     for (const wall of document.querySelectorAll<HTMLElement>('.wall')) {
       wall.classList.toggle('wall--cards', view === 'cards');
     }
-    for (const btn of buttons) {
-      btn.setAttribute('aria-pressed', String(btn.dataset.wallView === view));
-    }
+    // 按钮显示另一态名：点一下切过去
+    const next = view === 'cards' ? 'detail' : 'cards';
+    const label = next === 'cards' ? '卡片' : '详牌';
+    btn.textContent = label;
+    btn.setAttribute('aria-label', `切换到${label}`);
   };
 
   const stored = localStorage.getItem('atlas:wall-view');
   sync(stored === 'cards' ? 'cards' : 'detail');
 
-  for (const btn of buttons) {
-    btn.addEventListener('click', () => {
-      const view = btn.dataset.wallView === 'cards' ? 'cards' : 'detail';
-      localStorage.setItem('atlas:wall-view', view);
-      sync(view);
-    });
-  }
+  btn.addEventListener('click', () => {
+    const next = root.dataset.wallView === 'cards' ? 'detail' : 'cards';
+    localStorage.setItem('atlas:wall-view', next);
+    sync(next);
+  });
 }
 
 function init() {

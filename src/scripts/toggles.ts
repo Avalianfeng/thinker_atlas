@@ -66,13 +66,24 @@ function fillFrame(frame: HTMLElement, tile: SalonTile) {
   if (tile.src) {
     if (img) {
       img.src = tile.src;
+      img.removeAttribute('hidden');
       img.hidden = false;
     }
-    if (fallback) fallback.hidden = true;
-  } else if (fallback) {
-    fallback.textContent = tile.initial;
-    fallback.hidden = false;
-    if (img) img.hidden = true;
+    if (fallback) {
+      fallback.hidden = true;
+      fallback.setAttribute('hidden', '');
+    }
+  } else {
+    if (fallback) {
+      fallback.textContent = tile.initial;
+      fallback.hidden = false;
+      fallback.removeAttribute('hidden');
+    }
+    if (img) {
+      img.hidden = true;
+      img.setAttribute('hidden', '');
+      img.removeAttribute('src');
+    }
   }
 }
 

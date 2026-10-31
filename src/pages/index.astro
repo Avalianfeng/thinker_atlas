@@ -85,11 +85,16 @@ const wallTiles = byBorn.map((p) => {
             aria-label={wallTiles[0].name}
           >
             <span class="salon-mat">
-              {wallTiles[0].src ? (
-                <img class="salon-img" src={wallTiles[0].src} alt="" width="360" height="480" loading="eager" />
-              ) : (
-                <span class="salon-fallback" aria-hidden="true">{wallTiles[0].initial}</span>
-              )}
+              <img
+                class="salon-img"
+                src={wallTiles[0].src || undefined}
+                alt=""
+                width="200"
+                height="267"
+                loading="eager"
+                hidden={!wallTiles[0].src}
+              />
+              <span class="salon-fallback" aria-hidden="true" hidden={!!wallTiles[0].src}>{wallTiles[0].initial}</span>
             </span>
             <span class="salon-tombstone">{wallTiles[0].name}</span>
           </a>
@@ -104,11 +109,16 @@ const wallTiles = byBorn.map((p) => {
             aria-label={wallTiles[1].name}
           >
             <span class="salon-mat">
-              {wallTiles[1].src ? (
-                <img class="salon-img" src={wallTiles[1].src} alt="" width="360" height="480" loading="lazy" />
-              ) : (
-                <span class="salon-fallback" aria-hidden="true">{wallTiles[1].initial}</span>
-              )}
+              <img
+                class="salon-img"
+                src={wallTiles[1].src || undefined}
+                alt=""
+                width="140"
+                height="187"
+                loading="lazy"
+                hidden={!wallTiles[1].src}
+              />
+              <span class="salon-fallback" aria-hidden="true" hidden={!!wallTiles[1].src}>{wallTiles[1].initial}</span>
             </span>
             <span class="salon-tombstone">{wallTiles[1].name}</span>
           </a>
@@ -123,11 +133,16 @@ const wallTiles = byBorn.map((p) => {
             aria-label={wallTiles[2].name}
           >
             <span class="salon-mat">
-              {wallTiles[2].src ? (
-                <img class="salon-img" src={wallTiles[2].src} alt="" width="360" height="480" loading="lazy" />
-              ) : (
-                <span class="salon-fallback" aria-hidden="true">{wallTiles[2].initial}</span>
-              )}
+              <img
+                class="salon-img"
+                src={wallTiles[2].src || undefined}
+                alt=""
+                width="120"
+                height="160"
+                loading="lazy"
+                hidden={!wallTiles[2].src}
+              />
+              <span class="salon-fallback" aria-hidden="true" hidden={!!wallTiles[2].src}>{wallTiles[2].initial}</span>
             </span>
             <span class="salon-tombstone">{wallTiles[2].name}</span>
           </a>
@@ -176,8 +191,8 @@ const wallTiles = byBorn.map((p) => {
   }
   .salon-hang {
     position: relative;
-    width: min(100%, 520px);
-    height: clamp(300px, 48vw, 380px);
+    width: min(100%, 380px);
+    height: clamp(210px, 34vw, 260px);
     margin: 0;
   }
   .salon-frame {
@@ -188,26 +203,26 @@ const wallTiles = byBorn.map((p) => {
     color: inherit;
     z-index: 1;
   }
-  /* 主框：大、略前、微倾 */
+  /* 主框：缩小后的挂墙主位 */
   .salon-frame--main {
-    width: min(52%, 240px);
-    left: 6%;
-    top: 4%;
+    width: min(48%, 168px);
+    left: 8%;
+    top: 6%;
     z-index: 3;
     transform: rotate(-1.5deg);
   }
   /* 侧翼：略小、重叠、2–4° 倾 */
   .salon-frame--wing {
-    width: min(38%, 168px);
-    left: 42%;
-    top: 16%;
+    width: min(34%, 118px);
+    left: 46%;
+    top: 18%;
     z-index: 2;
     transform: rotate(3.2deg);
   }
   .salon-frame--wing-2 {
-    left: 58%;
-    top: 6%;
-    width: min(34%, 148px);
+    left: 62%;
+    top: 8%;
+    width: min(30%, 104px);
     transform: rotate(-2.8deg);
     z-index: 1;
   }
@@ -243,9 +258,10 @@ const wallTiles = byBorn.map((p) => {
     display: grid;
     place-items: center;
     font-family: var(--font-latin);
-    font-size: 3rem;
-    color: var(--ink-2);
-    opacity: 0.7;
+    font-size: 2.2rem;
+    color: color-mix(in srgb, var(--accent) 70%, var(--ink));
+    background: color-mix(in srgb, var(--accent) 16%, var(--paper-2));
+    opacity: 0.9;
   }
   /* tombstone：悬停 / 主位常显极短中文名 */
   .salon-tombstone {
@@ -276,16 +292,16 @@ const wallTiles = byBorn.map((p) => {
   }
   @media (max-width: 480px) {
     .salon-hang {
-      height: 280px;
+      height: 200px;
       width: 100%;
     }
     .salon-frame--main {
-      width: 48%;
+      width: 44%;
       left: 4%;
     }
     .salon-frame--wing {
-      width: 36%;
-      left: 46%;
+      width: 32%;
+      left: 48%;
     }
   }
   @media (prefers-reduced-motion: reduce) {

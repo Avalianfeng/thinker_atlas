@@ -10,4 +10,4 @@ portrait: ./portrait.jpg
 visibility: private
 ---
 
-肖像来源：Wikimedia Commons `File:Ludwig Wittgenstein 1929.jpg`（Moritz Nähr，约 1928–29，Public domain）。
+肖像来源：用户提供肖像。

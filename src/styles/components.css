@@ -785,14 +785,15 @@ html[data-wall-view='detail'] .placard .body {
   justify-content: flex-start;
 }
 
-/* 卡片：上图下名，无 intro；auto-fit 保证少人数也并排，不一人占满行 */
+/* 卡片：上图下名，无 intro；固定上限从左排，少人数不拉满整行 */
 html[data-wall-view='cards'] .wall,
 .wall.wall--cards {
   display: grid !important;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(160px, 200px));
   grid-auto-flow: row;
   gap: calc(var(--u) * 3);
   align-items: start;
+  justify-content: start;
   flex-direction: unset;
   flex-wrap: unset;
 }
@@ -801,7 +802,7 @@ html[data-wall-view='cards'] .placard,
   display: flex;
   flex-direction: column;
   width: 100%;
-  max-width: 100%;
+  max-width: 200px;
   min-width: 0;
   box-sizing: border-box;
   grid-column: auto;
@@ -865,7 +866,11 @@ html[data-wall-view='cards'] .placard .zh,
 @media (max-width: 767px) {
   html[data-wall-view='cards'] .wall,
   .wall.wall--cards {
-    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(140px, 180px));
+  }
+  html[data-wall-view='cards'] .placard,
+  .wall.wall--cards .placard {
+    max-width: 180px;
   }
   html:not([data-wall-view='cards']) .placard .portrait,
   html:not([data-wall-view='cards']) .placard .portrait-img,

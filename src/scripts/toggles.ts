@@ -27,6 +27,9 @@ function initWallView() {
 
   const sync = (view: 'detail' | 'cards') => {
     root.dataset.wallView = view;
+    for (const wall of document.querySelectorAll<HTMLElement>('.wall')) {
+      wall.classList.toggle('wall--cards', view === 'cards');
+    }
     for (const btn of buttons) {
       btn.setAttribute('aria-pressed', String(btn.dataset.wallView === view));
     }

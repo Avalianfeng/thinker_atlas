@@ -21,10 +21,10 @@
   --p-secondary-text: #56664f;
   --p-ai-text: #6b655c;
 
-  /* 字体 */
-  --font-serif: 'EB Garamond Text', 'Noto Serif SC', 'Source Han Serif SC', 'Songti SC', 'STSong', serif;
-  --font-sans: 'Noto Sans SC', 'Source Han Sans SC', 'PingFang SC', 'Microsoft YaHei', sans-serif;
-  --font-latin: 'EB Garamond', 'Garamond', 'Times New Roman', serif;
+  /* 字体：全站系统无衬线（不自托管、不子集） */
+  --font-sans: system-ui, -apple-system, "Segoe UI", "PingFang SC", "Microsoft YaHei", "Noto Sans SC", sans-serif;
+  --font-serif: var(--font-sans); /* 兼容旧引用，等同无衬线 */
+  --font-latin: system-ui, -apple-system, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
 
   /* 字号阶梯 */
   --fs-body: 18px;

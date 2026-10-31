@@ -2,19 +2,29 @@
 import Portrait from './Portrait.astro';
 import { lifespan, personUrl } from '../lib/atlas';
 import { resolvePortrait, personSlug } from '../lib/portrait';
+import { personAccent, type AccentPerson } from '../lib/accents';
 interface Props {
   person: any;
   index?: number;
   mini?: boolean;
+  /** 全站人物花名册；与多人线/人物页同色 */
+  allPeople: AccentPerson[];
+  /** 若父级已算好可直传，避免重复建 map */
+  accent?: string;
 }
-const { person, index = 0, mini = false } = Astro.props;
+const { person, index = 0, mini = false, allPeople, accent: accentProp } = Astro.props;
 const t = person.data;
 const years = lifespan(person);
 const slug = personSlug(person.id);
 const portraitSrc = resolvePortrait(slug, t.portrait);
-const seed = [...String(t.name)].reduce((a: number, c: string) => a + c.codePointAt(0)!, 0);
-const accents = ['#6E7F94', '#8B7355', '#5F7A6A', '#7A6A82', '#8A6E5C'];
-const accent = accents[seed % accents.length];
+const accent =
+  accentProp ??
+  personAccent({
+    id: person.id,
+    name: t.name,
+    born: t.born,
+    allPeople,
+  });
 const en = t.name_en || '';
 ---
 <a

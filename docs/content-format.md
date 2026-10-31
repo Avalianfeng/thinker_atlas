@@ -1,7 +1,7 @@
 ---
 name: 内容格式规范
 description: Thinker's Atlas 的 Markdown + YAML 内容格式（v2）。一人一夹，标准 CommonMark/GFM，无 MDX、无自定义组件。
-version: 2.1.1
+version: 2.1.3
 updated: 2026-10-31
 independence: docs/independence.md
 ---
@@ -101,9 +101,11 @@ events:
 
 - **个人** `/people/<id>/`：纵向列表（细竖轴），按 date 排序；区间显示为「起—止」。
 - **多人** 主页底部：横轴=时间，每行一人（左名、右线+圆点）；只消费 `multi: true`。
-- **交互**：圆点旁（或正下）常显短标题（过长省略）；悬停或点击开 tip（全文 date + title，可含人名）；再点空白或 Esc 关闭；可横向拖/滑。**点击圆点不跳转**。
-- **kind 点样式**：life 实心墨、publish accent 实心、write 空心 accent、meet 次墨、context 描边纸色；轴/刻度淡线。
-- **不要**人与人关系辅助线。无人 `multi` 时隐藏该区块（或极简提示）。
+- **寿命条**：行线端点对齐 `index.md` 的 born→died（在世用至今年）；无 born 时回退为该行事件年跨度。轴跨度 = 全员 born/died ∪ multi 事件年。
+- **交互**：圆点旁常显短标题（过长省略）；同行冲突时上/下交替或栈偏（细虚线引回圆点），超层则省略短标（全文仍靠 tip）；悬停或点击开 tip（date + title + 人名；有 born 时加「时年 N」= 事件年 − 出生年）；再点空白或 Esc 关闭；可横向拖/滑。**点击圆点不跳转**。
+- **kind 用形状（非配色）**：life 实心圆 ●、write 空心圆 ○、publish 实心方 ■、meet 实心菱 ◆、context 空心三角 △；统一墨色。轴/刻度淡线。
+- **按人行色**：寿命条与侧名点用固定冷色盘（蓝/青/灰蓝），按人物 `order`（缺省则 `id` 哈希）稳定取色；同人展牌 accent 一致。不要暖色主导。
+- **不要**人与人关系辅助线、默认年龄轴切换、冲突区角标。无人 `multi` 时隐藏该区块（或极简提示）。
 
 ## 6. 站点读侧
 
@@ -119,6 +121,8 @@ events:
 
 ## 变更记录
 
+- v2.1.3（2026-10-31）：kind 改形状符号；按人冷色行线（order/id）。
+- v2.1.3（2026-10-31）：多人线展示——同行标签避让、寿命条 born→died、tip 时年。
 - v2.1.1（2026-10-31）：多人线可读性——常显短标题、悬停/点击 tip、kind 点样式。
 - v2.1（2026-10-31）：增补 `timeline.yml`；个人纵轴 + 主页多人横轴；无 links/关系边。
 - v2（2026-10-31）：`people/<id>/` 扁平；废 MDX 与 thought/works/relations；真源仍为 git content/。

@@ -305,7 +305,7 @@ a.prop:hover {
 .concept-card .def {
   grid-column: 1 / -1;
   border-right: 0;
-  font-family: var(--font-serif);
+  font-family: var(--font-sans);
   font-size: var(--fs-body);
   line-height: var(--lh-body);
 }
@@ -422,7 +422,7 @@ a.prop:hover {
 }
 .timeline-v li {
   display: grid;
-  grid-template-columns: 7.5em 1fr;
+  grid-template-columns: minmax(10.5em, max-content) 1fr;
   gap: calc(var(--u) * 2);
   padding: var(--u) 0 var(--u) calc(var(--u) * 2);
   margin: 0;
@@ -435,22 +435,31 @@ a.prop:hover {
   top: 1.05em;
   width: 7px;
   height: 7px;
+  box-sizing: border-box;
   border-radius: 50%;
   background: var(--ink);
-  border: 1px solid var(--ink);
+  border: none;
+}
+/* kind 用形状，不用配色 */
+.timeline-v li.k-write::before {
+  background: var(--paper);
+  border: 1.5px solid var(--ink);
 }
 .timeline-v li.k-publish::before,
 .timeline-v li.k-出版::before {
-  background: var(--accent, var(--ink-2));
-  border-color: var(--accent, var(--ink-2));
-}
-.timeline-v li.k-write::before {
-  background: var(--paper);
-  border-color: var(--accent, var(--ink-2));
+  border-radius: 0;
+  background: var(--ink);
+  border: none;
 }
 .timeline-v li.k-meet::before {
-  background: var(--ink-2);
-  border-color: var(--ink-2);
+  width: 6px;
+  height: 6px;
+  left: -3.5px;
+  top: 1.15em;
+  border-radius: 0;
+  background: var(--ink);
+  border: none;
+  transform: rotate(45deg);
 }
 .timeline-v li.k-context,
 .timeline-v li.k-历史背景 {
@@ -458,14 +467,28 @@ a.prop:hover {
 }
 .timeline-v li.k-context::before,
 .timeline-v li.k-历史背景::before {
-  background: var(--paper);
-  border-color: var(--rule);
+  width: 0;
+  height: 0;
+  left: -5px;
+  top: 0.95em;
+  border-radius: 0;
+  background: transparent;
+  border-left: 4.5px solid transparent;
+  border-right: 4.5px solid transparent;
+  border-bottom: 8px solid transparent;
+  border-top: none;
+  /* 空心三角：外框用 box-shadow 近似；退而用描边色块 */
+  border-bottom-color: var(--ink);
+  opacity: 0.85;
+  clip-path: none;
 }
 .timeline-v .when {
   font-family: var(--font-sans);
   font-size: var(--fs-small);
   color: var(--ink-2);
   padding-top: 0.2em;
+  white-space: nowrap;
+  overflow: visible;
 }
 .timeline-v .kind {
   font-family: var(--font-sans);
@@ -477,6 +500,7 @@ a.prop:hover {
   white-space: nowrap;
 }
 .timeline-v .what {
+  font-family: var(--font-sans);
   line-height: 1.7;
 }
 .timeline-v .detail {
@@ -761,35 +785,58 @@ html[data-wall-view='detail'] .placard .body {
   justify-content: flex-start;
 }
 
-/* 卡片：上图下名，无 intro；桌面 4 / 中 3 / 小 2 */
-html[data-wall-view='cards'] .wall {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+/* 卡片：上图下名，无 intro；auto-fit 保证少人数也并排，不一人占满行 */
+html[data-wall-view='cards'] .wall,
+.wall.wall--cards {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  grid-auto-flow: row;
   gap: calc(var(--u) * 3);
+  align-items: start;
+  flex-direction: unset;
+  flex-wrap: unset;
 }
-html[data-wall-view='cards'] .placard {
+html[data-wall-view='cards'] .placard,
+.wall.wall--cards .placard {
+  display: flex;
   flex-direction: column;
-  width: auto;
+  width: 100%;
+  max-width: 100%;
   min-width: 0;
+  box-sizing: border-box;
+  grid-column: auto;
+  grid-row: auto;
   gap: 0;
   padding-bottom: 0;
 }
 html[data-wall-view='cards'] .placard .portrait,
 html[data-wall-view='cards'] .placard .portrait-img,
-html[data-wall-view='cards'] .placard .portrait-svg {
+html[data-wall-view='cards'] .placard .portrait-svg,
+.wall.wall--cards .placard .portrait,
+.wall.wall--cards .placard .portrait-img,
+.wall.wall--cards .placard .portrait-svg {
   width: 100%;
+  max-width: 100%;
+  min-width: 0;
   height: auto;
   aspect-ratio: 3 / 4;
+  flex: none;
 }
-html[data-wall-view='cards'] .placard .body {
+html[data-wall-view='cards'] .placard .body,
+.wall.wall--cards .placard .body {
   padding: calc(var(--u) * 1.5) calc(var(--u) * 0.5) calc(var(--u) * 2);
+  min-width: 0;
 }
 html[data-wall-view='cards'] .placard .orig,
 html[data-wall-view='cards'] .placard .years,
-html[data-wall-view='cards'] .placard .intro {
+html[data-wall-view='cards'] .placard .intro,
+.wall.wall--cards .placard .orig,
+.wall.wall--cards .placard .years,
+.wall.wall--cards .placard .intro {
   display: none;
 }
-html[data-wall-view='cards'] .placard .zh {
+html[data-wall-view='cards'] .placard .zh,
+.wall.wall--cards .placard .zh {
   font-size: var(--fs-h4);
 }
 
@@ -815,14 +862,10 @@ html[data-wall-view='cards'] .placard .zh {
   font-size: var(--fs-h4);
 }
 
-@media (max-width: 1199px) {
-  html[data-wall-view='cards'] .wall {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-}
 @media (max-width: 767px) {
-  html[data-wall-view='cards'] .wall {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+  html[data-wall-view='cards'] .wall,
+  .wall.wall--cards {
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
   }
   html:not([data-wall-view='cards']) .placard .portrait,
   html:not([data-wall-view='cards']) .placard .portrait-img,
@@ -1136,36 +1179,62 @@ html[data-wall-view='cards'] .placard .zh {
   font-size: 11px;
   opacity: 0.55;
 }
-.mtl .ev {
+/* kind 用形状区分，统一墨色；行线颜色才是人物 accent */
+.mtl .ev-mark {
+  pointer-events: none;
+}
+.mtl .ev-mark.filled {
   fill: var(--ink);
+  stroke: none;
+}
+.mtl .ev-mark.hollow {
+  fill: var(--paper);
+  stroke: var(--ink);
+  stroke-width: 1.5;
+}
+.mtl .ev {
+  fill: transparent;
   stroke: none;
   cursor: pointer;
 }
-.mtl .ev.k-life {
+.mtl-legend {
+  list-style: none;
+  margin: calc(var(--u) * 1.5) 0 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--u) calc(var(--u) * 2.5);
+  font-family: var(--font-sans);
+  font-size: var(--fs-tiny);
+  color: var(--ink-2);
+}
+.mtl-legend li {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35em;
+}
+.mtl-legend svg {
+  display: block;
+}
+.mtl-legend .ev-mark.filled {
   fill: var(--ink);
   stroke: none;
 }
-.mtl .ev.k-publish {
-  fill: var(--accent, var(--ink));
-  stroke: none;
-}
-.mtl .ev.k-write {
+.mtl-legend .ev-mark.hollow {
   fill: var(--paper);
-  stroke: var(--accent, var(--ink));
+  stroke: var(--ink);
   stroke-width: 1.5;
-}
-.mtl .ev.k-meet {
-  fill: var(--ink-2);
-  stroke: none;
-}
-.mtl .ev.k-context {
-  fill: var(--paper);
-  stroke: var(--rule);
-  stroke-width: 1.25;
 }
 .mtl .ev-label {
   fill: var(--ink-2);
   font-size: 10px;
+  pointer-events: none;
+}
+.mtl .ev-leader {
+  stroke: var(--ink-2);
+  stroke-width: 0.75;
+  stroke-dasharray: 2 2;
+  opacity: 0.45;
   pointer-events: none;
 }
 

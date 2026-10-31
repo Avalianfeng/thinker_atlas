@@ -22,12 +22,12 @@ npm run dev               # http://localhost:4321
 构建与预览：
 
 ```bash
-npm run build     # 会先同步肖像、字体子集化，再 astro build，最后跑 Pagefind
+npm run build     # 会先同步肖像，再 astro build，最后跑 Pagefind
 npm run preview   # 预览 dist/
 npm test          # 单元测试与内容自检
 ```
 
-> Node 需要 `>=22.23.4`（Astro 7）。字体：`predev` / `prebuild` 会跑 `scripts/subset-fonts.mjs`。
+> Node 需要 `>=22.23.4`（Astro 7）。字体用系统无衬线，不再子集化自托管字体。
 
 ## 二、日常三件事
 
@@ -95,7 +95,7 @@ src/
   lib/                ID、来源、肖像解析、API
   components/         Block / Quote / Portrait / 时间线 …
   pages/              展厅墙、人物、概念、作品、时间线 …
-scripts/              subset-fonts / sync-portraits / new-thinker / deploy
+scripts/              sync-portraits / new-thinker / deploy
 docs/content-format.md  内容格式
 docs/independence.md    独立运行合同
 dist/api/v1/          构建产物 JSON

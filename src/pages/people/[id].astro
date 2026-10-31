@@ -7,7 +7,7 @@ import { resolvePortrait, personSlug } from '@lib/portrait';
 import { mdToHtml } from '@lib/md';
 import { formatDay } from '@lib/git';
 import { loadPersonTimeline } from '@lib/timeline-yml';
-import { personAccent } from '@lib/accents';
+import { accentMapForPeople, type AccentPerson } from '@lib/accents';
 
 export async function getStaticPaths() {
   const atlas = await getAtlas();
@@ -23,7 +23,12 @@ const pieces = atlas.piecesOf(person.id);
 const portraitSrc = resolvePortrait(slug, t.portrait);
 const assetBase = `/people/${slug}`;
 const introHtml = mdToHtml(person.body, { assetBase });
-const accent = personAccent({ order: t.order, id: person.id });
+const accentPeople: AccentPerson[] = atlas.people.map((p) => ({
+  id: p.id,
+  name: p.data.name,
+  born: p.data.born ? String(p.data.born) : undefined,
+}));
+const accent = accentMapForPeople(accentPeople).get(person.id)!;
 const updated = atlas.updatedOf(person.id);
 const kindLabel: Record<string, string> = { life: '生平', work: '作品', note: '笔记', other: '其他' };
 const timeline = loadPersonTimeline(person.id);

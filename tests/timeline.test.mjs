@@ -13,7 +13,7 @@ import {
   estimateLabelWidth,
   layoutLaneLabels,
 } from '../src/lib/timeline-yml';
-import { COOL_ACCENTS, KIND_SHAPE, personAccent } from '../src/lib/accents';
+import { COOL_ACCENTS, KIND_SHAPE, personAccent, accentMapForPeople, compareByBorn } from '../src/lib/accents';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -187,25 +187,45 @@ describe('同行标签避让', () => {
 
 
 describe('personAccent / KIND_SHAPE', () => {
-  it('冷色盘无暖色；按 order 稳定取色', () => {
-    expect(COOL_ACCENTS.length).toBeGreaterThanOrEqual(5);
+  const roster = [
+    { id: 'russell', name: '伯特兰·罗素', born: '1872-05-18' },
+    { id: 'wittgenstein', name: '路德维希·维特根斯坦', born: '1889-04-26' },
+    { id: 'no-born', name: '无名氏' },
+  ];
+
+  it('冷色盘约 10 色、无暖色', () => {
+    expect(COOL_ACCENTS.length).toBeGreaterThanOrEqual(10);
     for (const c of COOL_ACCENTS) {
       expect(c).toMatch(/^#[0-9A-Fa-f]{6}$/);
-      // 粗略：B 通道不低于 R（偏蓝青），排除明显暖棕
       const r = parseInt(c.slice(1, 3), 16);
       const b = parseInt(c.slice(5, 7), 16);
       expect(b).toBeGreaterThanOrEqual(r - 8);
     }
-    expect(personAccent({ order: 1 })).toBe(COOL_ACCENTS[1]);
-    expect(personAccent({ order: 2 })).toBe(COOL_ACCENTS[2]);
-    expect(personAccent({ order: 1 + COOL_ACCENTS.length })).toBe(COOL_ACCENTS[1]);
   });
 
-  it('无 order 时按 id 稳定哈希', () => {
-    const a = personAccent({ id: 'wittgenstein' });
-    const b = personAccent({ id: 'wittgenstein' });
-    expect(a).toBe(b);
-    expect(COOL_ACCENTS).toContain(a);
+  it('按出生年升序取色；无 born 靠后；不用 order', () => {
+    const map = accentMapForPeople(roster);
+    expect(map.get('russell')).toBe(COOL_ACCENTS[0]);
+    expect(map.get('wittgenstein')).toBe(COOL_ACCENTS[1]);
+    expect(map.get('no-born')).toBe(COOL_ACCENTS[2]);
+    expect(
+      personAccent({ id: 'wittgenstein', name: '路德维希·维特根斯坦', born: '1889-04-26', allPeople: roster }),
+    ).toBe(COOL_ACCENTS[1]);
+    expect(
+      personAccent({ id: 'russell', born: '1872-05-18', allPeople: roster }),
+    ).toBe(COOL_ACCENTS[0]);
+  });
+
+  it('同岁按 name；compareByBorn 稳定', () => {
+    const same = [
+      { id: 'b', name: '乙', born: '1900' },
+      { id: 'a', name: '甲', born: '1900' },
+    ];
+    const sorted = [...same].sort(compareByBorn);
+    expect(sorted.map((p) => p.id)).toEqual(['a', 'b']);
+    const map = accentMapForPeople(same);
+    expect(map.get('a')).toBe(COOL_ACCENTS[0]);
+    expect(map.get('b')).toBe(COOL_ACCENTS[1]);
   });
 
   it('五类 kind 各有形状符号', () => {

@@ -785,35 +785,58 @@ html[data-wall-view='detail'] .placard .body {
   justify-content: flex-start;
 }
 
-/* 卡片：上图下名，无 intro；桌面 4 / 中 3 / 小 2 */
-html[data-wall-view='cards'] .wall {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+/* 卡片：上图下名，无 intro；auto-fit 保证少人数也并排，不一人占满行 */
+html[data-wall-view='cards'] .wall,
+.wall.wall--cards {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  grid-auto-flow: row;
   gap: calc(var(--u) * 3);
+  align-items: start;
+  flex-direction: unset;
+  flex-wrap: unset;
 }
-html[data-wall-view='cards'] .placard {
+html[data-wall-view='cards'] .placard,
+.wall.wall--cards .placard {
+  display: flex;
   flex-direction: column;
-  width: auto;
+  width: 100%;
+  max-width: 100%;
   min-width: 0;
+  box-sizing: border-box;
+  grid-column: auto;
+  grid-row: auto;
   gap: 0;
   padding-bottom: 0;
 }
 html[data-wall-view='cards'] .placard .portrait,
 html[data-wall-view='cards'] .placard .portrait-img,
-html[data-wall-view='cards'] .placard .portrait-svg {
+html[data-wall-view='cards'] .placard .portrait-svg,
+.wall.wall--cards .placard .portrait,
+.wall.wall--cards .placard .portrait-img,
+.wall.wall--cards .placard .portrait-svg {
   width: 100%;
+  max-width: 100%;
+  min-width: 0;
   height: auto;
   aspect-ratio: 3 / 4;
+  flex: none;
 }
-html[data-wall-view='cards'] .placard .body {
+html[data-wall-view='cards'] .placard .body,
+.wall.wall--cards .placard .body {
   padding: calc(var(--u) * 1.5) calc(var(--u) * 0.5) calc(var(--u) * 2);
+  min-width: 0;
 }
 html[data-wall-view='cards'] .placard .orig,
 html[data-wall-view='cards'] .placard .years,
-html[data-wall-view='cards'] .placard .intro {
+html[data-wall-view='cards'] .placard .intro,
+.wall.wall--cards .placard .orig,
+.wall.wall--cards .placard .years,
+.wall.wall--cards .placard .intro {
   display: none;
 }
-html[data-wall-view='cards'] .placard .zh {
+html[data-wall-view='cards'] .placard .zh,
+.wall.wall--cards .placard .zh {
   font-size: var(--fs-h4);
 }
 
@@ -839,14 +862,10 @@ html[data-wall-view='cards'] .placard .zh {
   font-size: var(--fs-h4);
 }
 
-@media (max-width: 1199px) {
-  html[data-wall-view='cards'] .wall {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-}
 @media (max-width: 767px) {
-  html[data-wall-view='cards'] .wall {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+  html[data-wall-view='cards'] .wall,
+  .wall.wall--cards {
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
   }
   html:not([data-wall-view='cards']) .placard .portrait,
   html:not([data-wall-view='cards']) .placard .portrait-img,

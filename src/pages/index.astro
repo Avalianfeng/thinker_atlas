@@ -5,7 +5,7 @@ import MultiTimeline from '@components/MultiTimeline.astro';
 import { getAtlas, entityForFile, personUrl } from '@lib/atlas';
 import { recentCommits, formatDay } from '@lib/git';
 import { loadMultiLanes } from '@lib/timeline-yml';
-import { personAccent } from '@lib/accents';
+import { accentMapForPeople, type AccentPerson } from '@lib/accents';
 
 const atlas = await getAtlas();
 /** 展厅墙默认按出生年排；无出生年靠后，同岁按 name 稳定排 */
@@ -18,12 +18,18 @@ const byBorn = [...atlas.people].sort((a, b) => {
   const cmp = ba.localeCompare(bb);
   return cmp !== 0 ? cmp : String(a.data.name).localeCompare(String(b.data.name), 'zh');
 });
+const accentPeople: AccentPerson[] = atlas.people.map((p) => ({
+  id: p.id,
+  name: p.data.name,
+  born: p.data.born ? String(p.data.born) : undefined,
+}));
+const accentById = accentMapForPeople(accentPeople);
 const multiLanes = loadMultiLanes(
   atlas.people.map((p) => ({
     id: p.id,
     name: p.data.name,
     order: p.data.order,
-    accent: personAccent({ order: p.data.order, id: p.id }),
+    accent: accentById.get(p.id)!,
     born: p.data.born ? String(p.data.born) : undefined,
     died: p.data.died ? String(p.data.died) : undefined,
   })),
@@ -60,9 +66,22 @@ const recent = recentCommits(40)
 
     <section class="wall" aria-label="人物展牌">
       {byBorn.map((p, i) => (
-        <Placard person={p} index={i} />
+        <Placard
+          person={p}
+          index={i}
+          allPeople={accentPeople}
+          accent={accentById.get(p.id)}
+        />
       ))}
     </section>
+
+    <script is:inline>
+      (() => {
+        if (document.documentElement.dataset.wallView === 'cards') {
+          document.querySelector('.wall')?.classList.add('wall--cards');
+        }
+      })();
+    </script>
 
     <div class="home-cols">
       <section>
